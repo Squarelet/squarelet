@@ -7,7 +7,8 @@ export default new Vuex.Store({
   state: {
     squares: [],
     connections: [],
-    height: 0
+    height: 0,
+    editorState: 'default'
   },
   mutations: {
     addSquare (state, square) {
@@ -18,6 +19,9 @@ export default new Vuex.Store({
         newSquares = [square]
       }
       Vue.set(state, 'squares', newSquares)
+    },
+    setEditorState (state, editorState) {
+      Vue.set(state, 'editorState', editorState)
     },
     setHeight (state, h) {
       Vue.set(state, 'height', h)
@@ -69,6 +73,7 @@ export default new Vuex.Store({
   getters: {
     allSquares: function (state) { return state.squares },
     allConnections: function (state) { return state.connections },
-    height: function (state) { return state.height }
+    height: function (state) { return state.height },
+    editorState: function (state) { return state.editorState }
   }
 })
