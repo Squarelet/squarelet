@@ -4,7 +4,7 @@
     <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
     <el-button @click="saveSquares()" type="primary" icon="el-icon-check">Save</el-button>
     </div>
-    <div class="board" :style="{height: heightN}">
+    <div class="board" :style="{height: heightN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
       <svg class="backgroundScreen" :style="{height: heightN}">
         <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
@@ -25,6 +25,8 @@ export default {
   },
   data: function () {
     return {
+      zoom: 1,
+      controlDown: false,
       connectionMode: false,
       connectionTmp: [],
       heightNum: 0,
@@ -32,6 +34,7 @@ export default {
     }
   },
   created () {
+    window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('scroll', this.onScroll);
 
     // Load Height
@@ -86,6 +89,16 @@ export default {
       this.connectionMode = true
       this.connectionTmp.push(event)
     },
+    onKeyPress: function (event) {
+      if (event.key === 'z') {
+         this.changeZoom(0.05);
+      } else if (event.key === 'Z') {
+         this.changeZoom(-0.05);
+      }
+    },
+    changeZoom: function (inc) {
+      this.zoom += inc;
+    },
     onActivated: function (event) {
       if (this.connectionMode) {
         let sq1 = this.allSquares.find(s => s.idx == this.connectionTmp[0])
@@ -122,7 +135,7 @@ export default {
     top: 0;
     bottom: 0;
     height: 100%;
-    z-index: -1;
+    z-index: 10;
   }
 }
 h3 {
@@ -147,7 +160,7 @@ a {
 
 .toolbar {
   position: fixed;
-  z-index: 10;
+  z-index: 11;
   margin: 20px;
 }
 
