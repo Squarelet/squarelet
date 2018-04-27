@@ -35,6 +35,7 @@ export default {
   replace: true,
   name: 'DraggableResizable',
   props: {
+    zoom: Number,
     active: {
       type: Boolean, default: false
     },
@@ -345,8 +346,8 @@ export default {
         ? e.touches[0].clientY
         : e.pageY || e.clientY + document.documentElement.scrollTop
 
-      let diffX = this.mouseX - this.lastMouseX + this.mouseOffX
-      let diffY = this.mouseY - this.lastMouseY + this.mouseOffY
+      let diffX = (this.mouseX - this.lastMouseX + this.mouseOffX)
+      let diffY = (this.mouseY - this.lastMouseY + this.mouseOffY)
 
       this.mouseOffX = this.mouseOffY = 0
 
@@ -399,8 +400,8 @@ export default {
           else if (this.elmY + this.elmH + dY > this.parentH) this.mouseOffY = (dY - (diffY = this.parentH - this.elmY - this.elmH))
         }
 
-        this.elmX += diffX
-        this.elmY += diffY
+        this.elmX += diffX/this.zoom
+        this.elmY += diffY/this.zoom
 
         if (this.axis === 'x' || this.axis === 'both') {
           this.left = (Math.round(this.elmX / this.grid[0]) * this.grid[0])
