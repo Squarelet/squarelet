@@ -8,6 +8,7 @@ export default new Vuex.Store({
     squares: [],
     connections: [],
     height: 0,
+    width: 100,
     editorState: 'default'
   },
   mutations: {
@@ -22,6 +23,9 @@ export default new Vuex.Store({
     },
     setEditorState (state, editorState) {
       Vue.set(state, 'editorState', editorState)
+    },
+    setWidth (state, w) {
+      Vue.set(state, 'width', w)
     },
     setHeight (state, h) {
       Vue.set(state, 'height', h)
@@ -61,6 +65,7 @@ export default new Vuex.Store({
 
       localStorage.setItem('connections', JSON.stringify(cs))
       localStorage.setItem('height', JSON.stringify(state.height))
+      localStorage.setItem('width', JSON.stringify(state.width))
     },
     addConnection (state, connection) {
       let nc = [...state.connections, connection]
@@ -74,6 +79,7 @@ export default new Vuex.Store({
     allSquares: function (state) { return state.squares },
     allConnections: function (state) { return state.connections },
     height: function (state) { return state.height },
+    width: function (state) { return state.width },
     editorState: function (state) { return state.editorState }
   }
 })

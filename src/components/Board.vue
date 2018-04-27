@@ -4,8 +4,8 @@
     <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
     <el-button @click="saveSquares()" type="primary" icon="el-icon-check">Save</el-button>
     </div>
-    <div class="board" :style="{height: heightN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
-      <svg class="backgroundScreen" :style="{height: heightN}">
+    <div class="board" :style="{height: heightN, width: `${width}%`, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
+      <svg class="backgroundScreen" :style="{height: heightN, width: `${width}%`}">
         <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
       <Square @activated="onActivated" @startConnect="onStartConnect" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
@@ -45,6 +45,14 @@ export default {
       this.setHeight(window.innerHeight)
     }
 
+    // Load width
+    let w = localStorage.getItem('width')
+    if (w) {
+      this.setWidth(Number(JSON.parse(w)))
+    } else {
+      this.setWidth(window.innerWidth)
+    }
+
     // Load Squares
     let sq = localStorage.getItem('squares')
     if (sq) {
@@ -77,7 +85,7 @@ export default {
       return this.height + 'px'
     },
     ...mapGetters([
-      'allSquares', 'allConnections', 'height'
+      'allSquares', 'allConnections', 'height', 'width'
     ])
   },
   methods: {
@@ -91,13 +99,14 @@ export default {
     },
     onKeyPress: function (event) {
       if (event.key === 'z') {
-         this.changeZoom(0.05);
+         this.changeZoom(0.05)
       } else if (event.key === 'Z') {
-         this.changeZoom(-0.05);
+         this.changeZoom(-0.05)
       }
     },
     changeZoom: function (inc) {
-      this.zoom += inc;
+      this.zoom += inc
+      this.setWidth(this.width/this.zoom)
     },
     onActivated: function (event) {
       if (this.connectionMode) {
@@ -119,7 +128,7 @@ export default {
       this.lastScroll = event.pageY
     },
     ...mapMutations([
-      'addSquare', 'setSquares', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight'
+      'addSquare', 'setSquares', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth'
     ])
   }
 }
