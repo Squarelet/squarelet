@@ -100,6 +100,7 @@ export default {
 .actions {
   position: absolute;
   margin-top: -50px;
+  min-width: 300px;
 }
 
 .is-editing {

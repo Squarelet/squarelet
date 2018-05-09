@@ -1,11 +1,11 @@
 <template>
-  <div class="squares" :style="{height: heightN}">
+  <div class="squares" :style="{'max-height': `${height}px`}">
     <div class="toolbar">
     <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
     <el-button @click="saveSquares()" type="primary" icon="el-icon-check">Save</el-button>
     </div>
-    <div class="board" :style="{height: heightN, width: `${width}%`, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
-      <svg class="backgroundScreen" :style="{height: heightN, width: `${width}%`}">
+    <div class="board" :style="{'height': `${height}px`, 'width': `${width}px`, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
+      <svg preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${width} ${height}`" class="backgroundScreen">
         <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
       <Square @activated="onActivated" @startConnect="onStartConnect" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
@@ -73,8 +73,6 @@ export default {
 
            this.addConnection({p1: sq1, p2: sq2})
         }
-        console.log(new_cs)
-
       } else {
         this.setConnections([])
       }
@@ -82,7 +80,19 @@ export default {
   },
   computed: {
     heightN: function () {
-      return this.height + 'px'
+      console.log(this.height/this.zoom )
+      if (this.height/this.zoom < window.innerHeight) {
+        return window.innerHeight + 'px'
+      } else {
+        return this.height + 'px'
+      }
+    },
+    widthN: function () {
+      if (this.height/this.zoom < window.innerHeight) {
+        return window.innerHeight + 'px'
+      } else {
+        return this.width + 'px'
+      }
     },
     ...mapGetters([
       'allSquares', 'allConnections', 'height', 'width'
@@ -105,8 +115,12 @@ export default {
       }
     },
     changeZoom: function (inc) {
-      this.zoom += inc
-      this.setWidth(this.width/this.zoom)
+      let newZoom = this.zoom + inc
+      this.zoom = (newZoom >= 0.2) ? newZoom: 0.2
+      if (this.zoom < 1) {
+        this.setWidth(this.width/this.zoom)
+        this.setHeight(this.height/this.zoom)
+      }
     },
     onActivated: function (event) {
       if (this.connectionMode) {
@@ -121,9 +135,9 @@ export default {
     createConnections: function () {
     },
     onScroll: function (event) {
-      if (event.pageY >= this.lastScroll && (window.document.body.scrollHeight === window.scrollY + window.innerHeight)) {
-        this.changeHeight(25)
-      }
+      // if (event.pageY >= this.lastScroll && (window.document.body.scrollHeight === window.scrollY + window.innerHeight)) {
+      //   this.changeHeight(25)
+      // }
 
       this.lastScroll = event.pageY
     },
@@ -137,14 +151,19 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 .squares {
-  width: 100%;
+
   .board {
     background-color: #cfebff;
     width: 100%;
     top: 0;
     bottom: 0;
     height: 100%;
+    left: 0;
     z-index: 10;
+    display: inline-block;
+    position: absolute;
+    width: 100%;
+    vertical-align: top;
   }
 }
 h3 {
@@ -176,6 +195,7 @@ a {
 .backgroundScreen {
    position: absolute;
    width: 100%;
+   height: 100%;
    left:0;
    top:0;
 }
