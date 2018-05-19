@@ -49,6 +49,18 @@ export default new Vuex.Store({
       let foundSquare = state.squares.findIndex(s => s.idx == idx)
       if (foundSquare >= 0) {
         state.squares.splice(foundSquare, 1)
+        let deleteConnections = []
+        for (let i = 0; i < state.connections.length; ++i) {
+          let connection = state.connections[i]
+          if (connection.p1.idx === idx || connection.p2.idx === idx) {
+            deleteConnections.push(i)
+          }
+        }
+        let d = 0
+        for (let i = 0; i < deleteConnections.length; ++i) {
+          state.connections.splice(deleteConnections[i - d], 1)
+          d += 1
+        }
       }
     },
     saveSquares (state) {
@@ -68,6 +80,18 @@ export default new Vuex.Store({
       localStorage.setItem('width', JSON.stringify(state.width))
     },
     addConnection (state, connection) {
+      // Don't allow connection with itself (for now at least)
+      if (connection.p1.idx === connection.p2.idx) {
+        return
+      }
+      // Don't add duplicate connections
+      for (let i = 0; i < state.connections.length; ++i) {
+         let c = state.connections[i]
+         if ((c.p1.idx === connection.p1.idx && c.p2.idx === connection.p2.idx) ||
+             (c.p1.idx === connection.p2.idx && c.p2.idx === connection.p1.idx)) {
+           return;
+         }
+      }
       let nc = [...state.connections, connection]
       Vue.set(state, 'connections', nc)
     }

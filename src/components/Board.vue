@@ -10,27 +10,47 @@
       </svg>
       <Square @activated="onActivated" @startConnect="onStartConnect" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
+    <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
+        :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
+      <el-row class="actions">
+        <el-button @click="openEditor(s)" type="primary" icon="el-icon-edit" circle></el-button>
+        <el-button @click="s.onConnect" type="success" icon="el-icon-share" circle></el-button>
+        <el-button @click="s.removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
+        <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}" v-if="s.showActions && !s.editing"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button>
+      </el-row>
+    </div>
+    <div class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
+      <div class="square-editor" :style="{'opacity': (showEditor)? (editorOpacity): '0', 'visibility': (showEditor)? 'visible' : 'hidden'}">
+        <el-button   @click="showEditor = false" type="success" icon="el-icon-save">Save</el-button>
+        <el-button   @click="changeEditorOpacity()" type="success">Preview</el-button>
+        <markdown-editor v-if="editSquare.editing" :id="'contentEditor-' + editSquare.idx" :class="{'is-editing': editSquare.editing}" v-model="editSquare.text" :height="300" :zIndex="20"></markdown-editor>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 
+import MarkdownEditor from './MarkdownEditor'
 import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
   name: 'SquareBoard',
-  components: { Square },
+  components: { Square, MarkdownEditor },
   props: {
   },
   data: function () {
     return {
+      editSquare: {},
+      editorOpacity: 1,
       zoom: 1,
       controlDown: false,
       connectionMode: false,
       connectionTmp: [],
       heightNum: 0,
-      lastScroll: 0
+      lastScroll: 0,
+      showEditor: false
     }
   },
   created () {
@@ -99,6 +119,14 @@ export default {
     ])
   },
   methods: {
+    openEditor: function (square) {
+      this.editSquare = square
+      this.editSquare.editing = true
+      this.showEditor = true
+    },
+    changeEditorOpacity: function () {
+      this.editorOpacity = (this.editorOpacity == 1) ? 0.3 : 1
+    },
     offsetY: function () {
       return window.scrollY
     },
@@ -166,6 +194,29 @@ export default {
     vertical-align: top;
   }
 }
+
+.cover {
+  display: flex;
+  position: fixed;
+  z-index: 15;
+  top:0;
+  left:0;
+  bottom:0;
+  right: 0;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.square-editor {
+  visibility: hidden;
+  opacity: 0;
+  transition: z-index 0.3s, visibility 0.3s, opacity 0.3s linear;
+  min-height: 50%;
+  max-height: 90%;
+  width: 90%;
+  background-color: white;
+}
 h3 {
   margin: 40px 0 0;
 }
@@ -179,6 +230,14 @@ li {
 }
 a {
   color: #42b983;
+}
+
+.square-border {
+  position: absolute;
+  min-width: 400px;
+  z-index: 15;
+  display: flex;
+  align-items: left;
 }
 
 .connection {

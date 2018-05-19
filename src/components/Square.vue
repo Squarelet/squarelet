@@ -1,16 +1,15 @@
 <template>
   <draggable-resizable @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
     <el-card :body-style="{ height: '100%', 'background-color': color }" class="note">
-      <el-row class="actions">
+<!--      <el-row class="actions">
         <el-button v-if="showActions && !editing" @click="editing = !editing" type="primary" icon="el-icon-edit" circle></el-button>
         <el-button v-if="showActions && editing"  @click="editing = !editing" type="success" icon="el-icon-success" circle></el-button>
         <el-button v-if="showActions"  @click="onConnect" type="success" icon="el-icon-share" circle></el-button>
         <el-button v-if="showActions && !editing"  @click="removeSquare(idx)" type="danger" icon="el-icon-delete" circle></el-button>
         <el-button :style="{'background-color': this.color, 'border-color': 'rgba(0,0,0,0.3)'}" v-if="showActions && !editing"  @click="selectColor()" type="success" icon="el-icon-edit" circle></el-button>
-      </el-row>
+      </el-row> -->
       <el-row>
-      <div v-if="!editing" v-html="html"></div>
-      <markdown-editor  v-if="editing" :id="'contentEditor-' + idx" :class="{'is-editing': editing}" v-model="text" :height="300" :zIndex="20"></markdown-editor>
+      <div v-html="html"></div>
       </el-row>
     </el-card>
   </draggable-resizable>
