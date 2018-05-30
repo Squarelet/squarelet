@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import createPersistedState from 'vuex-persistedstate'
 
 Vue.use(Vuex)
 
@@ -40,8 +41,10 @@ export default new Vuex.Store({
       Vue.set(state, 'connections', cs)
     },
     updateSquare (state, sq) {
+      console.log('FIND', sq.idx, sq)
       let foundSquare = state.squares.findIndex(s => s.idx === sq.idx)
       if (foundSquare >= 0) {
+        console.log('SQUARE', sq._data)
         Vue.set(state.squares, foundSquare, sq)
       }
     },
@@ -105,5 +108,6 @@ export default new Vuex.Store({
     height: function (state) { return state.height },
     width: function (state) { return state.width },
     editorState: function (state) { return state.editorState }
-  }
+  },
+  plugins: [createPersistedState()]
 })

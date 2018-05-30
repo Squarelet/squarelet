@@ -1,22 +1,22 @@
 <template>
-  <div class="squares" :style="{'max-height': `${height}px`}">
+  <div class="squares" :style="{'max-height': heightN}">
     <div class="toolbar">
     <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
     <el-button @click="saveSquares()" type="primary" icon="el-icon-check">Save</el-button>
     </div>
-    <div class="board" :style="{'height': `${height}px`, 'width': `${width}px`, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
-      <svg preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${width} ${height}`" class="backgroundScreen">
+    <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
+      <svg @dblclick="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
-      <Square @activated="onActivated" @startConnect="onStartConnect" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square @activated="onActivated" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
-      <el-row class="actions">
-        <el-button @click="openEditor(s)" type="primary" icon="el-icon-edit" circle></el-button>
-        <el-button @click="s.onConnect" type="success" icon="el-icon-share" circle></el-button>
-        <el-button @click="s.removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
-        <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}" v-if="s.showActions && !s.editing"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button>
+      <el-row class="actions" v-if="s.showActions && !s.editing">
+        <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button>
+        <el-button class="action" @click="onConnect(s)" type="success" icon="el-icon-share" circle></el-button>
+        <el-button class="action" @click="removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
+        <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button>
       </el-row>
     </div>
     <div class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
@@ -40,6 +40,12 @@ export default {
   components: { Square, MarkdownEditor },
   props: {
   },
+  sockets: {
+    'squares': function (data) {
+      console.log(data)
+//      this.setBoard(data)
+    },
+  },
   data: function () {
     return {
       editSquare: {},
@@ -54,53 +60,59 @@ export default {
     }
   },
   created () {
-    window.addEventListener('keypress', this.onKeyPress);
-    window.addEventListener('scroll', this.onScroll);
+    window.addEventListener('keypress', this.onKeyPress)
+    window.addEventListener('scroll', this.onScroll)
+    window.addEventListener('resize', this.onResize)
 
     // Load Height
-    let h = localStorage.getItem('height')
-    if (h) {
-      this.setHeight(Number(JSON.parse(h)))
-    } else {
-      this.setHeight(window.innerHeight)
-    }
+    // let h = localStorage.getItem('height')
+    // if (h) {
+    //   this.setHeight(Number(JSON.parse(h)))
+    // } else {
+    //   this.setHeight(window.innerHeight)
+    // }
 
-    // Load width
-    let w = localStorage.getItem('width')
-    if (w) {
-      this.setWidth(Number(JSON.parse(w)))
-    } else {
-      this.setWidth(window.innerWidth)
-    }
+    // // Load width
+    // let w = localStorage.getItem('width')
+    // if (w) {
+    //   this.setWidth(Number(JSON.parse(w)))
+    // } else {
+    //   this.setWidth(window.innerWidth)
+    // }
 
-    // Load Squares
-    let sq = localStorage.getItem('squares')
-    if (sq) {
-      this.setSquares(JSON.parse(sq))
-    } else {
-      this.setSquares([])
-    }
+    // // Load Squares
+    // let sq = localStorage.getItem('squares')
+    // if (sq) {
+    //   this.setSquares(JSON.parse(sq))
+    // } else {
+    //   this.setSquares([])
+    // }
 
     this.$nextTick(() => {
-      let cs = localStorage.getItem('connections')
+      let cs = this.allConnections
       if (cs) {
-        cs = JSON.parse(cs)
-        console.log(cs)
+        console.log('all CONECTIONS', cs)
         let new_cs = []
         for (let i = 0; i < cs.length; ++i) {
            let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
            let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
 
-           this.addConnection({p1: sq1, p2: sq2})
+           new_cs.push({p1: sq1, p2: sq2})
         }
+        this.setConnections(new_cs)
       } else {
         this.setConnections([])
       }
+
+      let vuex = localStorage.getItem('vuex')
+      this.$socket.emit('update', vuex)
     })
+
+
   },
   computed: {
     heightN: function () {
-      console.log(this.height/this.zoom )
+      console.log(this.height, window.innerHeight)
       if (this.height/this.zoom < window.innerHeight) {
         return window.innerHeight + 'px'
       } else {
@@ -108,18 +120,22 @@ export default {
       }
     },
     widthN: function () {
-      if (this.height/this.zoom < window.innerHeight) {
-        return window.innerHeight + 'px'
+      if (this.width/this.zoom < window.innerWidth) {
+        return window.innerWidth + 'px'
       } else {
         return this.width + 'px'
       }
     },
     ...mapGetters([
-      'allSquares', 'allConnections', 'height', 'width'
+      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString'
     ])
   },
   methods: {
-    openEditor: function (square) {
+    openEditor: function (square, e) {
+      console.log(e);
+      if (e.stopPropagation) e.stopPropagation()
+      if (e.preventDefault) e.preventDefault()
+
       this.editSquare = square
       this.editSquare.editing = true
       this.showEditor = true
@@ -130,16 +146,32 @@ export default {
     offsetY: function () {
       return window.scrollY
     },
-    onStartConnect: function (event) {
-      console.log('Conecting', event)
+    offsetX: function () {
+      return window.scrollX
+    },
+    addSquareOnCursor: function (event) {
+      console.log('DBCLICK', event)
+      this.addSquare({x: this.offsetX() + event.clientX, y: this.offsetY() + event.clientY, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
+    },
+    onConnect: function (square) {
+      console.log('Conecting', square)
       this.connectionMode = true
-      this.connectionTmp.push(event)
+      this.connectionTmp.push(square)
+      console.log(square.idx)
     },
     onKeyPress: function (event) {
       if (event.key === 'z') {
          this.changeZoom(0.05)
       } else if (event.key === 'Z') {
          this.changeZoom(-0.05)
+      }
+    },
+    onResize: function (event) {
+      if (this.height < window.innerHeight) {
+        this.setHeight(window.innerHeight)
+      }
+      if (this.width < window.innerWidth) {
+        this.setWidth(window.innerWidth)
       }
     },
     changeZoom: function (inc) {
@@ -152,7 +184,7 @@ export default {
     },
     onActivated: function (event) {
       if (this.connectionMode) {
-        let sq1 = this.allSquares.find(s => s.idx == this.connectionTmp[0])
+        let sq1 = this.allSquares.find(s => s.idx == this.connectionTmp[0].idx)
         let sq2 = this.allSquares.find(s => s.idx == event)
 
         this.addConnection({p1: sq1, p2: sq2})
@@ -170,7 +202,7 @@ export default {
       this.lastScroll = event.pageY
     },
     ...mapMutations([
-      'addSquare', 'setSquares', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth'
+      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth'
     ])
   }
 }
@@ -197,7 +229,7 @@ export default {
 
 .cover {
   display: flex;
-  position: fixed;
+  position: absolute;
   z-index: 15;
   top:0;
   left:0;
@@ -213,7 +245,6 @@ export default {
   opacity: 0;
   transition: z-index 0.3s, visibility 0.3s, opacity 0.3s linear;
   min-height: 50%;
-  max-height: 90%;
   width: 90%;
   background-color: white;
 }

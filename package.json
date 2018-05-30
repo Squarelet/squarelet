@@ -12,11 +12,14 @@
     "font-awesome": "^4.7.0",
     "showdown": "^1.8.6",
     "simplemde": "^1.11.2",
+    "socketio": "^1.0.0",
     "vue": "^2.5.13",
     "vue-color": "^2.4.6",
     "vue-draggable-resizable": "^1.7.1",
     "vue-router": "^3.0.1",
-    "vuex": "^3.0.1"
+    "vue-socket.io": "^2.1.1-b",
+    "vuex": "^3.0.1",
+    "vuex-persistedstate": "^2.5.4"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-beta.6",
