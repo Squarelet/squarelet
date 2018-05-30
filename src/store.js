@@ -6,6 +6,7 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
+    bgcolor: 'rgba(18,64,126,1)',
     squares: [],
     connections: [],
     height: 0,
@@ -47,6 +48,9 @@ export default new Vuex.Store({
         console.log('SQUARE', sq._data)
         Vue.set(state.squares, foundSquare, sq)
       }
+    },
+    setBgcolor (state, bgcolor) {
+      Vue.set(state, 'bgcolor', bgcolor)
     },
     removeSquare (state, idx) {
       let foundSquare = state.squares.findIndex(s => s.idx == idx)
@@ -107,7 +111,8 @@ export default new Vuex.Store({
     allConnections: function (state) { return state.connections },
     height: function (state) { return state.height },
     width: function (state) { return state.width },
-    editorState: function (state) { return state.editorState }
+    editorState: function (state) { return state.editorState },
+    bgcolor: function (state) { return state.bgcolor }
   },
   plugins: [createPersistedState()]
 })

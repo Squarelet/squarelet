@@ -1,10 +1,37 @@
 <template>
   <div class="squares" :style="{'max-height': heightN}">
     <div class="toolbar">
-    <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
-    <el-button @click="saveSquares()" type="primary" icon="el-icon-check">Save</el-button>
+      <el-dropdown @command="handleDropdownMenu" trigger="click">
+        <el-button type="primary">
+          Edit<i class="el-icon-arrow-down el-icon--right"></i>
+        </el-button>
+        <el-dropdown-menu slot="dropdown">
+          <template slot="title">Edit</template>
+          <el-dropdown-item index="1" command="background">
+            <i class="el-icon-picture"></i>Background
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+      <el-dialog
+        title="Background settings"
+        :visible.sync="backgroundSettingsVisible"
+        :modal="false"
+        width="30%">
+        <el-color-picker
+           show-alpha
+           v-model="bgcolor"
+           :predefine="predefineColors">
+        </el-color-picker>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="backgroundSettingsVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="backgroundSettingsVisible = false">Confirm</el-button>
+        </span>
+      </el-dialog>
+
+    <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
+      <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
-    <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`}">
+    <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-color': bgcolor}">
       <svg @dblclick="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
@@ -48,6 +75,22 @@ export default {
   },
   data: function () {
     return {
+      predefineColors: [
+        '#ff4500',
+        '#ff8c00',
+        '#ffd700',
+        '#90ee90',
+        '#00ced1',
+        '#1e90ff',
+        '#c71585',
+        'rgba(255, 69, 0, 0.68)',
+        'rgb(255, 120, 0)',
+        'hsv(51, 100, 98)',
+        'hsva(120, 40, 94, 0.5)',
+        'hsl(181, 100%, 37%)',
+        'hsla(209, 100%, 56%, 0.73)',
+        '#c7158577'
+      ],
       editSquare: {},
       editorOpacity: 1,
       zoom: 1,
@@ -56,7 +99,8 @@ export default {
       connectionTmp: [],
       heightNum: 0,
       lastScroll: 0,
-      showEditor: false
+      showEditor: false,
+      backgroundSettingsVisible: false
     }
   },
   created () {
@@ -111,6 +155,15 @@ export default {
 
   },
   computed: {
+    bgcolor: {
+      get () {
+        return this.$store.state.bgcolor
+      },
+      set (color) {
+        console.log('color', color)
+        this.$store.commit('setBgcolor', color)
+      }
+    },
     heightN: function () {
       console.log(this.height, window.innerHeight)
       if (this.height/this.zoom < window.innerHeight) {
@@ -132,7 +185,6 @@ export default {
   },
   methods: {
     openEditor: function (square, e) {
-      console.log(e);
       if (e.stopPropagation) e.stopPropagation()
       if (e.preventDefault) e.preventDefault()
 
@@ -150,8 +202,16 @@ export default {
       return window.scrollX
     },
     addSquareOnCursor: function (event) {
-      console.log('DBCLICK', event)
       this.addSquare({x: this.offsetX() + event.clientX, y: this.offsetY() + event.clientY, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
+    },
+    handleDropdownMenu: function (event) {
+      console.log('DROPDOWN', event)
+      if (event === 'background') {
+        this.backgroundSettingsVisible = true
+      }
+    },
+    onChangeBgcolor: function (color) {
+      this.setBgcolor(color)
     },
     onConnect: function (square) {
       console.log('Conecting', square)
@@ -282,11 +342,22 @@ a {
   margin: 20px;
 }
 
+.el-dialog__wrapper {
+  z-index: 10;
+}
+
 .backgroundScreen {
    position: absolute;
    width: 100%;
    height: 100%;
    left:0;
    top:0;
+}
+
+.sidebar-menu {
+  z-index: 25;
+
+  &.el-menu--collapse {
+  }
 }
 </style>
