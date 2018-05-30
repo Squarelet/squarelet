@@ -20,8 +20,15 @@
         <el-color-picker
            show-alpha
            v-model="bgcolor"
+           @active-change="onChangeBgcolor"
            :predefine="predefineColors">
         </el-color-picker>
+        <p/>
+        <el-form>
+          <el-form-item label="Background image URL">
+            <el-input v-model="bgurl"></el-input>
+          </el-form-item>
+        </el-form>
         <span slot="footer" class="dialog-footer">
           <el-button @click="backgroundSettingsVisible = false">Cancel</el-button>
           <el-button type="primary" @click="backgroundSettingsVisible = false">Confirm</el-button>
@@ -31,7 +38,7 @@
     <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
       <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
-    <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-color': bgcolor}">
+    <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
@@ -39,11 +46,11 @@
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
-      <el-row class="actions" v-if="s.showActions && !s.editing">
+      <el-row class="actions" v-if="s.showActions">
         <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onConnect(s)" type="success" icon="el-icon-share" circle></el-button>
         <el-button class="action" @click="removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
-        <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button>
+        <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
     </div>
     <div class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
@@ -155,12 +162,19 @@ export default {
 
   },
   computed: {
+    bgurl: {
+      get () {
+        return this.$store.state.bgurl
+      },
+      set (bgurl) {
+        this.$store.commit('setBgurl', bgurl)
+      }
+    },
     bgcolor: {
       get () {
         return this.$store.state.bgcolor
       },
       set (color) {
-        console.log('color', color)
         this.$store.commit('setBgcolor', color)
       }
     },
@@ -211,7 +225,7 @@ export default {
       }
     },
     onChangeBgcolor: function (color) {
-      this.setBgcolor(color)
+      this.bgcolor = color
     },
     onConnect: function (square) {
       console.log('Conecting', square)
