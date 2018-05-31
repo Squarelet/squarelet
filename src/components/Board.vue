@@ -40,8 +40,11 @@
     </div>
     <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
-        <line :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
+        <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
+      <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
+        <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
+      </div>
       <Square @activated="onActivated" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
@@ -76,12 +79,15 @@ export default {
   },
   sockets: {
     'squares': function (data) {
-      console.log(data)
-//      this.setBoard(data)
     },
   },
   data: function () {
     return {
+      selectedConnection: {},
+      conEditorTime: 0,
+      showConnectionEditor: false,
+      conEditorLeft: 0,
+      conEditorTop: 0,
       predefineColors: [
         '#ff4500',
         '#ff8c00',
@@ -268,6 +274,44 @@ export default {
     },
     createConnections: function () {
     },
+    onClickLine: function (connection) {
+      console.log(connection)
+    },
+    onRemoveConnection: function () {
+      this.showConnectionEditor = false
+      this.removeConnection(this.selectedConnection)
+    },
+    onMouseoverConnection: function (event, connection) {
+      this.conEditorTime = new Date().getMilliseconds()
+      this.showConnectionEditor = true
+      window.setInterval(this.checkTimeoutConEditor, 200)
+      this.conEditorLeft = event.clientX + 'px'
+      this.conEditorTop = this.offsetY() + event.clientY + 'px'
+    },
+    onClickConnection: function (event, connection) {
+      this.showConnectionEditor = true
+      this.selectedConnection = connection
+      this.conEditorLeft = event.clientX + 'px'
+      this.conEditorTop = this.offsetY() + event.clientY + 'px'
+    },
+    onMouseoutConnection: function (event, connection) {
+      let now = new Date().getMilliseconds()
+      if (now - this.conEditorTime > 1000) {
+        this.showConnectionEditor = false
+      }
+      // let middleX = connection.p1.x + (connection.p1.x - connection.p2.x)/2.0
+      // this.conEditorLeft = event.clientX + 'px'
+      // this.conEditorTop = this.offsetY() + event.clientY + 'px'
+    },
+    checkTimeoutConEditor: function () {
+      let now = new Date().getMilliseconds()
+      console.log(now, 'TIMEOUT')
+      if (now - this.conEditorTime > 300) {
+        console.log('remove')
+        this.showConnectionEditor = false
+        window.clearInterval()
+      }
+    },
     onScroll: function (event) {
       // if (event.pageY >= this.lastScroll && (window.document.body.scrollHeight === window.scrollY + window.innerHeight)) {
       //   this.changeHeight(25)
@@ -276,7 +320,7 @@ export default {
       this.lastScroll = event.pageY
     },
     ...mapMutations([
-      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth'
+      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection'
     ])
   }
 }
@@ -348,6 +392,10 @@ a {
 .connection {
    border: 1px solid black;
    position: absolute;
+}
+
+.connection-editor {
+  position: absolute;
 }
 
 .toolbar {

@@ -56,6 +56,12 @@ export default new Vuex.Store({
     setBgurl (state, bgurl) {
       Vue.set(state, 'bgurl', bgurl)
     },
+    removeConnection (state, connection) {
+      let foundConnection = state.connections.findIndex(c => c == connection)
+      if (foundConnection >= 0) {
+          state.connections.splice(foundConnection, 1)
+      }
+    },
     removeSquare (state, idx) {
       let foundSquare = state.squares.findIndex(s => s.idx == idx)
       if (foundSquare >= 0) {
