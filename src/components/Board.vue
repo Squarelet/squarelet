@@ -13,8 +13,12 @@
           <el-dropdown-item command="download">
             <i class="el-icon-download"></i>Download
           </el-dropdown-item>
+          <el-dropdown-item command="load">
+            <i class="el-icon-upload"></i>Load
+          </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
+      <LoadFile @updatedState="updateConnections" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
       <el-dialog
         title="Background settings"
         :visible.sync="backgroundSettingsVisible"
@@ -37,7 +41,6 @@
           <el-button type="primary" @click="backgroundSettingsVisible = false">Confirm</el-button>
         </span>
       </el-dialog>
-
     <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
       <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
@@ -74,21 +77,24 @@
 import MarkdownEditor from './MarkdownEditor'
 import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
+import LoadFile from './LoadFiles'
 
 export default {
   name: 'SquareBoard',
-  components: { Square, MarkdownEditor },
+  components: { Square, MarkdownEditor, LoadFile },
   props: {
   },
   sockets: {
     'squares': function (data) {
-    },
+      // this.$store.replaceState(data)
+    }
   },
   data: function () {
     return {
       selectedConnection: {},
       conEditorTime: 0,
       showConnectionEditor: false,
+      loadFileVisible: false,
       conEditorLeft: 0,
       conEditorTop: 0,
       predefineColors: [
@@ -149,22 +155,9 @@ export default {
     // }
 
     this.$nextTick(() => {
-      let cs = this.allConnections
-      if (cs) {
-        let new_cs = []
-        for (let i = 0; i < cs.length; ++i) {
-           let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
-           let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
-
-           new_cs.push({p1: sq1, p2: sq2})
-        }
-        this.setConnections(new_cs)
-      } else {
-        this.setConnections([])
-      }
-
-      let vuex = localStorage.getItem('vuex')
-      this.$socket.emit('update', vuex)
+      this.updateConnections()
+      // let vuex = localStorage.getItem('vuex')
+      // this.$socket.emit('update', vuex)
     })
 
 
@@ -201,7 +194,7 @@ export default {
       }
     },
     ...mapGetters([
-      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString'
+      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state'
     ])
   },
   methods: {
@@ -222,14 +215,38 @@ export default {
     offsetX: function () {
       return window.scrollX
     },
+    updateConnections: function () {
+      console.log('UPDATE')
+      let cs = this.allConnections
+      if (cs) {
+        let new_cs = []
+        for (let i = 0; i < cs.length; ++i) {
+           let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
+           let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
+
+           new_cs.push({p1: sq1, p2: sq2})
+        }
+        this.setConnections(new_cs)
+      } else {
+        this.setConnections([])
+      }
+    },
     addSquareOnCursor: function (event) {
       this.addSquare({x: this.offsetX() + event.clientX, y: this.offsetY() + event.clientY, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
     },
     handleDropdownMenu: function (event) {
-      if (event === 'background') {
-        this.backgroundSettingsVisible = true
-      } else if (event === 'download') {
-        this.onDownloadPad()
+      switch (event) {
+        case 'background':
+          this.backgroundSettingsVisible = true
+          break
+
+        case 'download':
+          this.onDownloadPad()
+          break
+
+        case 'load':
+          this.loadFileVisible = true
+          break
       }
     },
     onChangeBgcolor: function (color) {
@@ -318,7 +335,7 @@ export default {
     },
     onDownloadPad: function () {
       let element = document.createElement('a')
-      let padConfig = JSON.stringify(localStorage.getItem('vuex'), null, 2)
+      let padConfig = localStorage.getItem('vuex')
       element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(padConfig))
       element.setAttribute('download', 'pad-config.json')
       element.style.display = 'none'

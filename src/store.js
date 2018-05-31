@@ -120,7 +120,8 @@ export default new Vuex.Store({
     height: function (state) { return state.height },
     width: function (state) { return state.width },
     editorState: function (state) { return state.editorState },
-    bgcolor: function (state) { return state.bgcolor }
+    bgcolor: function (state) { return state.bgcolor },
+    state: function (state) { return state }
   },
   plugins: [createPersistedState()]
 })

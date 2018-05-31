@@ -19,7 +19,7 @@ import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
   props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String },
-  components: { DraggableResizable, MarkdownEditor, sketch },
+  components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
       width: this.iwidth,
