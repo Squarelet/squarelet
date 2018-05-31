@@ -57,7 +57,6 @@ export default {
       this.setEditorState('editing')
     },
     onConnect: function () {
-      console.log('CONECT')
       this.$emit('startConnect', this.idx)
     },
     onResize: function (x, y, width, height) {
@@ -75,7 +74,6 @@ export default {
     },
     onSelectColor: function (event) {
       this.setEditorState('colorSelect')
-      console.log('COLOR SELECT')
     },
     onSelectedColor: function (event) {
       this.setEditorState('default')

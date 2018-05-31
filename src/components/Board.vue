@@ -7,8 +7,11 @@
         </el-button>
         <el-dropdown-menu slot="dropdown">
           <template slot="title">Edit</template>
-          <el-dropdown-item index="1" command="background">
+          <el-dropdown-item command="background">
             <i class="el-icon-picture"></i>Background
+          </el-dropdown-item>
+          <el-dropdown-item command="download">
+            <i class="el-icon-download"></i>Download
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
@@ -148,7 +151,6 @@ export default {
     this.$nextTick(() => {
       let cs = this.allConnections
       if (cs) {
-        console.log('all CONECTIONS', cs)
         let new_cs = []
         for (let i = 0; i < cs.length; ++i) {
            let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
@@ -185,7 +187,6 @@ export default {
       }
     },
     heightN: function () {
-      console.log(this.height, window.innerHeight)
       if (this.height/this.zoom < window.innerHeight) {
         return window.innerHeight + 'px'
       } else {
@@ -225,19 +226,18 @@ export default {
       this.addSquare({x: this.offsetX() + event.clientX, y: this.offsetY() + event.clientY, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
     },
     handleDropdownMenu: function (event) {
-      console.log('DROPDOWN', event)
       if (event === 'background') {
         this.backgroundSettingsVisible = true
+      } else if (event === 'download') {
+        this.onDownloadPad()
       }
     },
     onChangeBgcolor: function (color) {
       this.bgcolor = color
     },
     onConnect: function (square) {
-      console.log('Conecting', square)
       this.connectionMode = true
       this.connectionTmp.push(square)
-      console.log(square.idx)
     },
     onKeyPress: function (event) {
       if (event.key === 'z') {
@@ -275,7 +275,6 @@ export default {
     createConnections: function () {
     },
     onClickLine: function (connection) {
-      console.log(connection)
     },
     onRemoveConnection: function () {
       this.showConnectionEditor = false
@@ -305,9 +304,7 @@ export default {
     },
     checkTimeoutConEditor: function () {
       let now = new Date().getMilliseconds()
-      console.log(now, 'TIMEOUT')
       if (now - this.conEditorTime > 300) {
-        console.log('remove')
         this.showConnectionEditor = false
         window.clearInterval()
       }
@@ -318,6 +315,16 @@ export default {
       // }
 
       this.lastScroll = event.pageY
+    },
+    onDownloadPad: function () {
+      let element = document.createElement('a')
+      let padConfig = JSON.stringify(localStorage.getItem('vuex'), null, 2)
+      element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(padConfig))
+      element.setAttribute('download', 'pad-config.json')
+      element.style.display = 'none'
+      document.body.appendChild(element)
+      element.click()
+      document.body.removeChild(element)
     },
     ...mapMutations([
       'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection'
@@ -406,6 +413,10 @@ a {
 
 .el-dialog__wrapper {
   z-index: 10;
+}
+
+.el-dropdown-menu__item {
+  display: block;
 }
 
 .backgroundScreen {

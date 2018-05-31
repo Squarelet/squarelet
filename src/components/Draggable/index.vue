@@ -264,8 +264,6 @@ export default {
       const target = e.target || e.srcElement
       const regex = new RegExp('(action|handle-([trmbl]{2}))', '')
 
-      console.log(target.className)
-
       if (!this.$el.contains(target) && !regex.test(target.className)) {
         if (this.enabled) {
           this.enabled = false
