@@ -1,5 +1,5 @@
 <template>
-  <div class="squares" :style="{'max-height': heightN}">
+  <div class="squares" :style="{'max-height': heightN + 'px', 'background-color': bgcolor}">
     <div class="toolbar">
       <el-dropdown @command="handleDropdownMenu" trigger="click">
         <el-button type="primary">
@@ -44,8 +44,8 @@
     <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
       <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
-    <div class="board" :style="{'height': heightN, 'width': widthN, 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
-      <svg @dblclick="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
+    <div class="board" :style="{'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
+      <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
@@ -97,6 +97,8 @@ export default {
       loadFileVisible: false,
       conEditorLeft: 0,
       conEditorTop: 0,
+      origWidth: 0,
+      origHeight: 0,
       predefineColors: [
         '#ff4500',
         '#ff8c00',
@@ -116,6 +118,7 @@ export default {
       editSquare: {},
       editorOpacity: 1,
       zoom: 1,
+      zoomLevel: 0,
       controlDown: false,
       connectionMode: false,
       connectionTmp: [],
@@ -130,29 +133,13 @@ export default {
     window.addEventListener('scroll', this.onScroll)
     window.addEventListener('resize', this.onResize)
 
-    // Load Height
-    // let h = localStorage.getItem('height')
-    // if (h) {
-    //   this.setHeight(Number(JSON.parse(h)))
-    // } else {
-    //   this.setHeight(window.innerHeight)
-    // }
+    this.origWidth = window.innerWidth
+    this.origHeight = window.innerHeight
 
-    // // Load width
-    // let w = localStorage.getItem('width')
-    // if (w) {
-    //   this.setWidth(Number(JSON.parse(w)))
-    // } else {
-    //   this.setWidth(window.innerWidth)
-    // }
+    this.setHeight(this.origHeight)
+    this.setWidth(this.origWidth)
 
-    // // Load Squares
-    // let sq = localStorage.getItem('squares')
-    // if (sq) {
-    //   this.setSquares(JSON.parse(sq))
-    // } else {
-    //   this.setSquares([])
-    // }
+    console.log(this.width, this.height)
 
     this.$nextTick(() => {
       this.updateConnections()
@@ -180,18 +167,10 @@ export default {
       }
     },
     heightN: function () {
-      if (this.height/this.zoom < window.innerHeight) {
-        return window.innerHeight + 'px'
-      } else {
-        return this.height + 'px'
-      }
+      return this.height
     },
     widthN: function () {
-      if (this.width/this.zoom < window.innerWidth) {
-        return window.innerWidth + 'px'
-      } else {
-        return this.width + 'px'
-      }
+      return this.width
     },
     ...mapGetters([
       'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state'
@@ -232,7 +211,9 @@ export default {
       }
     },
     addSquareOnCursor: function (event) {
-      this.addSquare({x: this.offsetX() + event.clientX, y: this.offsetY() + event.clientY, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
+      if (event.stopPropagation) event.stopPropagation()
+      if (event.preventDefault) event.preventDefault()
+      this.addSquare({x: (this.offsetX() + event.clientX)/this.zoom, y: (this.offsetY() + event.clientY)/this.zoom, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
     },
     handleDropdownMenu: function (event) {
       switch (event) {
@@ -258,9 +239,9 @@ export default {
     },
     onKeyPress: function (event) {
       if (event.key === 'z') {
-         this.changeZoom(0.05)
+         this.changeZoom(+1)
       } else if (event.key === 'Z') {
-         this.changeZoom(-0.05)
+         this.changeZoom(-1)
       }
     },
     onResize: function (event) {
@@ -272,11 +253,23 @@ export default {
       }
     },
     changeZoom: function (inc) {
-      let newZoom = this.zoom + inc
-      this.zoom = (newZoom >= 0.2) ? newZoom: 0.2
-      if (this.zoom < 1) {
-        this.setWidth(this.width/this.zoom)
-        this.setHeight(this.height/this.zoom)
+      if (inc >= 1) {
+        if (this.zoom === 0.2) {
+          return
+        }
+        this.zoomLevel += 1
+        let newZoom = 1  - this.zoomLevel * 0.2
+        this.zoom = (newZoom >= 0.2) ? newZoom: 0.2
+        this.setWidth(this.origWidth / this.zoom)
+        this.setHeight(this.origHeight / this.zoom)
+        console.log('ZOOM OUT',  this.zoom, this.zoomLevel, this.width, this.height)
+      } else {
+        console.log('ZOOM IN', this.zoom, this.zoomLevel, this.width, this.height)
+        this.zoomLevel -= 1
+        this.setWidth(this.origWidth / (1 - this.zoomLevel*0.2))
+        this.setHeight(this.origHeight / (1 - this.zoomLevel*0.2))
+        this.zoom = 1 - this.zoomLevel * 0.2
+        console.log('ZOOM IN', this.zoom, this.zoomLevel, this.width, this.height)
       }
     },
     onActivated: function (event) {
@@ -366,6 +359,7 @@ export default {
     position: absolute;
     width: 100%;
     vertical-align: top;
+    transition: transform 0.5s;
   }
 }
 
