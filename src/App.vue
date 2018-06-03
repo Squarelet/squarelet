@@ -12,7 +12,6 @@
   color: #2c3e50;
   width: 100%;
   height: 100%;
-  background-color: red;
 }
 #nav {
   a {
@@ -25,6 +24,5 @@
 }
 body {
   margin: 0;
-  background-color: red;
 }
 </style>

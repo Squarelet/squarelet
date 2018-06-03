@@ -44,7 +44,7 @@
     <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
       <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
-    <div class="board" :style="{'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': '0 0', 'transform': `scale(${zoom})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
+    <div class="board" :style="{'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': '0 0', 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
@@ -58,7 +58,8 @@
       <el-row class="actions" v-if="s.showActions">
         <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onConnect(s)" type="success" icon="el-icon-share" circle></el-button>
-        <el-button class="action" @click="removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
+        <el-button class="action" @click="zoomSquare(s)" type="success" icon="el-icon-zoom-in" circle></el-button>
+        <el-button class="action right" @click="removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
         <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
     </div>
@@ -79,6 +80,8 @@ import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
 
+const uiStates = {'DEFAULT': 0, 'SELECTED_SQUARE': 1, 'ZOOM_ON_SQUARE': 2}
+
 export default {
   name: 'SquareBoard',
   components: { Square, MarkdownEditor, LoadFile },
@@ -91,6 +94,8 @@ export default {
   },
   data: function () {
     return {
+      uiState: uiStates['DEFAULT'],
+      squareOnZoom: {},
       selectedConnection: {},
       conEditorTime: 0,
       showConnectionEditor: false,
@@ -124,11 +129,14 @@ export default {
       connectionTmp: [],
       heightNum: 0,
       lastScroll: 0,
+      translateX: 0,
+      translateY: 0,
       showEditor: false,
       backgroundSettingsVisible: false
     }
   },
   created () {
+    window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keypress', this.onKeyPress)
     window.addEventListener('scroll', this.onScroll)
     window.addEventListener('resize', this.onResize)
@@ -194,6 +202,15 @@ export default {
     offsetX: function () {
       return window.scrollX
     },
+    zoomSquare: function (square) {
+      this.squareOnZoom = square
+      let scale = (window.innerWidth - 80)/square.width
+      square.showActions = false
+      this.translateX = -square.x + 40/scale + 'px'
+      this.translateY = -square.y  + 40/scale + 'px'
+      this.zoom = scale
+      this.uiState = uiStates['ZOOM_ON_SQUARE']
+    },
     updateConnections: function () {
       console.log('UPDATE')
       let cs = this.allConnections
@@ -237,11 +254,52 @@ export default {
       this.connectionMode = true
       this.connectionTmp.push(square)
     },
+    onKeyDown: function (event) {
+      switch (this.uiState) {
+        case uiStates['DEFAULT']:
+          switch (event.key) {
+            default:
+              console.log(event)
+              break
+          }
+          break
+        case uiStates['ZOOM_ON_SQUARE']:
+          switch (event.key) {
+            case 'Escape':
+              this.zoom = 1
+              this.translateX = 0
+              this.translateY = 0
+              this.uiState = uiStates['DEFAULT']
+              this.squareOnZoom.showActions = true
+              break
+          }
+          break
+      }
+    },
     onKeyPress: function (event) {
-      if (event.key === 'z') {
-         this.changeZoom(+1)
-      } else if (event.key === 'Z') {
-         this.changeZoom(-1)
+      console.log(event)
+      switch (event.key) {
+        case 'z':
+          switch (this.uiState) {
+            case 0:
+              this.changeZoom(+1)
+              break
+            default:
+              break
+          }
+          break;
+        case 'Z':
+          switch (this.uiState) {
+            case 0:
+              this.changeZoom(-1)
+              break
+            default:
+              break
+          }
+          break
+        default:
+          console.log('KEY', event.keyCode);
+          break
       }
     },
     onResize: function (event) {
@@ -401,7 +459,7 @@ a {
 
 .square-border {
   position: absolute;
-  min-width: 400px;
+  min-width: 200px;
   z-index: 15;
   display: flex;
   align-items: left;
@@ -444,4 +502,15 @@ a {
   &.el-menu--collapse {
   }
 }
+
+.actions {
+  width: 100%;
+
+  .action {
+    &.right {
+      float: right;
+    }
+  }
+}
+
 </style>

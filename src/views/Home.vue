@@ -6,6 +6,8 @@
 
 <script>
 // @ is an alias to /src
+import 'font-awesome/css/font-awesome.min.css'
+import 'simplemde/dist/simplemde.min.css'
 import SquareBoard from '@/components/Board.vue'
 import { mapGetters, mapMutations  } from 'vuex'
 
