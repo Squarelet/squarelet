@@ -1,7 +1,10 @@
 <template>
   <div class="squares" :style="{'max-height': heightN + 'px', 'background-color': bgcolor}">
     <div class="toolbar">
-      <el-dropdown @command="handleDropdownMenu" trigger="click">
+      <el-button class="action" @click.stop.prevent="zoomOutSquare()" type="primary" v-if="uiState === 2">
+          Back <i class="el-icon-zoom-out"></i>
+      </el-button>
+      <el-dropdown @command="handleDropdownMenu" trigger="click" v-if="uiState !== 2">
         <el-button type="primary">
           Edit<i class="el-icon-arrow-down el-icon--right"></i>
         </el-button>
@@ -80,7 +83,7 @@ import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
 
-const uiStates = {'DEFAULT': 0, 'SELECTED_SQUARE': 1, 'ZOOM_ON_SQUARE': 2}
+const uiStates = {'DEFAULT': 0, 'SELECTED_SQUARE': 1, 'ZOOM_ON_SQUARE': 2, 'EDITING_SQUARE': 3}
 
 export default {
   name: 'SquareBoard',
@@ -185,6 +188,10 @@ export default {
     ])
   },
   methods: {
+    closeEditor: function () {
+      this.showEditor = false
+      this.uiState = uiStates['DEFAULT']
+    },
     openEditor: function (square, e) {
       if (e.stopPropagation) e.stopPropagation()
       if (e.preventDefault) e.preventDefault()
@@ -192,6 +199,7 @@ export default {
       this.editSquare = square
       this.editSquare.editing = true
       this.showEditor = true
+      this.uiState = uiStates['EDITING_SQUARE']
     },
     changeEditorOpacity: function () {
       this.editorOpacity = (this.editorOpacity == 1) ? 0.3 : 1
@@ -201,6 +209,13 @@ export default {
     },
     offsetX: function () {
       return window.scrollX
+    },
+    zoomOutSquare: function () {
+      this.zoom = 1
+      this.translateX = 0
+      this.translateY = 0
+      this.uiState = uiStates['DEFAULT']
+      this.squareOnZoom.showActions = true
     },
     zoomSquare: function (square) {
       this.squareOnZoom = square
@@ -266,14 +281,16 @@ export default {
         case uiStates['ZOOM_ON_SQUARE']:
           switch (event.key) {
             case 'Escape':
-              this.zoom = 1
-              this.translateX = 0
-              this.translateY = 0
-              this.uiState = uiStates['DEFAULT']
-              this.squareOnZoom.showActions = true
+              this.zoomOutSquare()
               break
           }
           break
+        case uiStates['EDITING_SQUARE']:
+          switch (event.key) {
+            case 'Escape':
+              this.closeEditor()
+              break
+          }
       }
     },
     onKeyPress: function (event) {
