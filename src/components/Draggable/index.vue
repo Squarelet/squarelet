@@ -254,6 +254,11 @@ export default {
       }
     },
     deselect: function (e) {
+      if (e.target.classList[0] === 'backgroundScreen') {
+         e.preventDefault()
+         return
+      }
+
       if (e.type.indexOf('touch') !== -1) {
         this.mouseX = e.changedTouches[0].clientX
         this.mouseY = e.changedTouches[0].clientY
