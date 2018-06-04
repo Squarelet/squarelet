@@ -1,6 +1,6 @@
 <template>
   <draggable-resizable @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
-  <el-card :body-style="{ height: '100%', 'background-color': color, 'overflow': 'scroll'}" class="note">
+  <el-card :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div v-html="html"></div>
       </el-row>
@@ -102,10 +102,6 @@ export default {
    display: none;
    height: 80%;
    width: 98%;
-}
-
-.el-card__body {
-  overflow: scroll;
 }
 
 .note {
