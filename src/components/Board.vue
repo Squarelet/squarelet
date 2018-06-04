@@ -47,7 +47,7 @@
     <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
       <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
-    <div class="board" :style="{'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': '0 0', 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
+    <div class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': '0 0', 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
@@ -66,10 +66,8 @@
         <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
     </div>
-    <div class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
+    <div @click="closeEditorOnClick($event)" class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
       <div class="square-editor" :style="{'opacity': (showEditor)? (editorOpacity): '0', 'visibility': (showEditor)? 'visible' : 'hidden'}">
-        <el-button   @click="showEditor = false" type="success" icon="el-icon-save">Save</el-button>
-        <el-button   @click="changeEditorOpacity()" type="success">Preview</el-button>
         <markdown-editor v-if="editSquare.editing" :id="'contentEditor-' + editSquare.idx" :class="{'is-editing': editSquare.editing}" v-model="editSquare.text" :height="300" :zIndex="20"></markdown-editor>
       </div>
     </div>
@@ -147,10 +145,17 @@ export default {
     this.origWidth = window.innerWidth
     this.origHeight = window.innerHeight
 
-    this.setHeight(this.origHeight)
-    this.setWidth(this.origWidth)
+    if (this.width > this.origWidth) {
+      this.origWidth = this.width
+    } else {
+      this.setWidth(this.origWidth)
+    }
 
-    console.log(this.width, this.height)
+    if (this.height > this.origHeight) {
+      this.origHeight = this.height
+    } else {
+      this.setHeight(this.origHeight)
+    }
 
     this.$nextTick(() => {
       this.updateConnections()
@@ -183,11 +188,25 @@ export default {
     widthN: function () {
       return this.width
     },
+    boardPosition: function () {
+      switch (this.uiState) {
+        case uiStates['EDITING_SQUARE']:
+          return 'fixed'
+        default:
+          return 'absolute'
+      }
+    },
     ...mapGetters([
       'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state'
     ])
   },
   methods: {
+    closeEditorOnClick: function (event) {
+      if (event.target.className === 'cover') {
+        this.closeEditor()
+        this.boardDisplay = 'block'
+      }
+    },
     closeEditor: function () {
       this.showEditor = false
       this.uiState = uiStates['DEFAULT']
@@ -200,6 +219,7 @@ export default {
       this.editSquare.editing = true
       this.showEditor = true
       this.uiState = uiStates['EDITING_SQUARE']
+      this.boardDisplay = 'fixed'
     },
     changeEditorOpacity: function () {
       this.editorOpacity = (this.editorOpacity == 1) ? 0.3 : 1
@@ -430,7 +450,6 @@ export default {
     height: 100%;
     left: 0;
     z-index: 10;
-    display: inline-block;
     position: absolute;
     width: 100%;
     vertical-align: top;
@@ -447,7 +466,7 @@ export default {
   bottom:0;
   right: 0;
   width: 100%;
-  align-items: center;
+  padding-top: 20px;
   justify-content: center;
 }
 
@@ -457,6 +476,8 @@ export default {
   transition: z-index 0.3s, visibility 0.3s, opacity 0.3s linear;
   min-height: 50%;
   width: 90%;
+  max-height: 90%;
+  padding: 20px;
   background-color: white;
 }
 h3 {

@@ -1,5 +1,5 @@
 <template>
-  <div class="simplemde-container" :style="{height:height+'px',zIndex:zIndex}">
+  <div class="simplemde-container" :style="{zIndex:zIndex}">
     <textarea :id="id">
     </textarea>
   </div>
@@ -52,7 +52,7 @@ export default {
   mounted() {
     this.simplemde = new SimpleMDE({
       element: document.getElementById(this.id || 'markdown-editor-' + +new Date()),
-      autoDownloadFontAwesome: false,
+      autoDownloadFontAwesome: true,
       autofocus: this.autofocus,
       toolbar: this.toolbar,
       spellChecker: false,
@@ -80,9 +80,16 @@ export default {
 </script>
 
 <style scoped>
+
+.simplemde-container {
+  max-height: 100%;
+  height: 90%;
+}
+
 .simplemde-container>>>.CodeMirror {
   min-height: 150px;
   line-height: 20px;
+  height: 100%;
 }
 
 .simplemde-container>>>.CodeMirror-scroll {
@@ -117,5 +124,9 @@ export default {
 .simplemde-container >>> .editor-toolbar.fullscreen,
 .simplemde-container >>> .CodeMirror-fullscreen {
   z-index: 1003;
+}
+
+.editor-preview-site {
+   padding-left: 5%;
 }
 </style>

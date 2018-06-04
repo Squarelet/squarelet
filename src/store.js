@@ -12,7 +12,9 @@ export default new Vuex.Store({
     connections: [],
     height: 0,
     width: 100,
-    editorState: 'default'
+    editorState: 'default',
+    minHeight: 0,
+    minWidth: 0
   },
   mutations: {
     addSquare (state, square) {
@@ -121,7 +123,9 @@ export default new Vuex.Store({
     width: function (state) { return state.width },
     editorState: function (state) { return state.editorState },
     bgcolor: function (state) { return state.bgcolor },
-    state: function (state) { return state }
+    state: function (state) { return state },
+    minWidth: function (state) { return state.minWidth },
+    minHeight: function (state) { return state.minHeight }
   },
   plugins: [createPersistedState()]
 })
