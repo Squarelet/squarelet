@@ -1,21 +1,12 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import createPersistedState from 'vuex-persistedstate'
+import stateTemplate from './template'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  state: {
-    bgcolor: 'rgba(18,64,126,1)',
-    bgurl: '',
-    squares: [],
-    connections: [],
-    height: 0,
-    width: 100,
-    editorState: 'default',
-    minHeight: 0,
-    minWidth: 0
-  },
+  state: stateTemplate,
   mutations: {
     addSquare (state, square) {
       var newSquares
@@ -34,6 +25,9 @@ export default new Vuex.Store({
     },
     setHeight (state, h) {
       Vue.set(state, 'height', h)
+    },
+    setLastZ (state, z) {
+       Vue.set(state, 'lastZ', z)
     },
     changeHeight (state, delta) {
       Vue.set(state, 'height', state.height + delta)
@@ -125,7 +119,8 @@ export default new Vuex.Store({
     bgcolor: function (state) { return state.bgcolor },
     state: function (state) { return state },
     minWidth: function (state) { return state.minWidth },
-    minHeight: function (state) { return state.minHeight }
+    minHeight: function (state) { return state.minHeight },
+    lastZ: function (state) { return state.lastZ }
   },
   plugins: [createPersistedState()]
 })

@@ -11,13 +11,16 @@
         <el-dropdown-menu slot="dropdown">
           <template slot="title">Edit</template>
           <el-dropdown-item command="background">
-            <i class="el-icon-picture"></i>Background
+            <i class="el-icon-picture"></i> Background
           </el-dropdown-item>
           <el-dropdown-item command="download">
-            <i class="el-icon-download"></i>Download
+            <i class="el-icon-download"></i> Download
           </el-dropdown-item>
           <el-dropdown-item command="load">
-            <i class="el-icon-upload"></i>Load
+            <i class="el-icon-upload"></i> Load
+          </el-dropdown-item>
+          <el-dropdown-item command="clear">
+            <i class="el-icon-remove"></i> Clear
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
@@ -47,14 +50,14 @@
     <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
       <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
-    <div class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': '0 0', 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
-      <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
+    <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
+      <svg  @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square @activated="onActivated" @squaresMoved="createConnections" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections" :style="{'z-index': s.zIndex}" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
@@ -62,7 +65,7 @@
         <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onConnect(s)" type="success" icon="el-icon-share" circle></el-button>
         <el-button class="action" @click="zoomSquare(s)" type="success" icon="el-icon-zoom-in" circle></el-button>
-        <el-button class="action right" @click="removeSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
+        <el-button class="action right" @click="onRemoveSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
         <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
     </div>
@@ -80,8 +83,9 @@ import MarkdownEditor from './MarkdownEditor'
 import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
+import stateTemplate from '../template'
 
-const uiStates = {'DEFAULT': 0, 'SELECTED_SQUARE': 1, 'ZOOM_ON_SQUARE': 2, 'EDITING_SQUARE': 3}
+const uiStates = {'DEFAULT': 0, 'SELECTED_SQUARE': 1, 'ZOOM_ON_SQUARE': 2, 'EDITING_SQUARE': 3, 'DRAG': 4}
 
 export default {
   name: 'SquareBoard',
@@ -95,6 +99,7 @@ export default {
   },
   data: function () {
     return {
+      lastZ: 1,
       uiState: uiStates['DEFAULT'],
       squareOnZoom: {},
       selectedConnection: {},
@@ -105,6 +110,10 @@ export default {
       conEditorTop: 0,
       origWidth: 0,
       origHeight: 0,
+      dragX: 0,
+      dragY: 0,
+      zoomX: 0,
+      zoomY: 0,
       predefineColors: [
         '#ff4500',
         '#ff8c00',
@@ -141,20 +150,14 @@ export default {
     window.addEventListener('keypress', this.onKeyPress)
     window.addEventListener('scroll', this.onScroll)
     window.addEventListener('resize', this.onResize)
+    window.addEventListener('mousemove', this.onMouseMove)
 
-    this.origWidth = window.innerWidth
-    this.origHeight = window.innerHeight
-
-    if (this.width > this.origWidth) {
-      this.origWidth = this.width
-    } else {
-      this.setWidth(this.origWidth)
-    }
-
-    if (this.height > this.origHeight) {
-      this.origHeight = this.height
-    } else {
-      this.setHeight(this.origHeight)
+    this.adjustInitialCanvasSize()
+    // Get highest z index
+    for (sq in this.squares) {
+      if (sq.zIndex > this.lastZ) {
+        this.lastZ = sq.zIndex
+      }
     }
 
     this.$nextTick(() => {
@@ -162,7 +165,6 @@ export default {
       // let vuex = localStorage.getItem('vuex')
       // this.$socket.emit('update', vuex)
     })
-
 
   },
   computed: {
@@ -201,6 +203,50 @@ export default {
     ])
   },
   methods: {
+    adjustInitialCanvasSize: function () {
+      this.origWidth = window.innerWidth
+      this.origHeight = window.innerHeight
+
+      if (this.width > this.origWidth) {
+        this.origWidth = this.width
+      } else {
+        this.setWidth(this.origWidth)
+      }
+
+      if (this.height > this.origHeight) {
+        this.origHeight = this.height
+      } else {
+        this.setHeight(this.origHeight)
+      }
+    },
+    onMouseMove: function (event) {
+      // this.zoomX = event.clientX
+      // this.zoomY = event.clientY
+    },
+    onStartDrag: function (event) {
+      console.log('START DRAG')
+      this.uiState = uiStates['DRAG']
+      this.dragX = event.pageX
+      this.dragY = event.pageY
+    },
+    onDrag: function (event) {
+      if (this.uiState === uiStates['DRAG']) {
+        console.log('DRAG')
+        console.log(event)
+        let sensibility = 0.7
+        window.scrollBy((this.dragX - event.pageX)*sensibility, (this.dragY - event.pageY)*sensibility)
+      }
+    },
+    onStopDrag: function (event) {
+      if (this.uiState === uiStates['DRAG']) {
+        this.uiState = uiStates['DEFAULT']
+        console.log('STOP DRAG')
+      }
+    },
+    onTouchRight: function () {
+      // this.setWidth(this.width + 200)
+      // window.scrollBy(window.scrollX + 200,0)
+    },
     closeEditorOnClick: function (event) {
       if (event.target.className === 'cover') {
         this.closeEditor()
@@ -265,7 +311,18 @@ export default {
     addSquareOnCursor: function (event) {
       if (event.stopPropagation) event.stopPropagation()
       if (event.preventDefault) event.preventDefault()
-      this.addSquare({x: (this.offsetX() + event.clientX)/this.zoom, y: (this.offsetY() + event.clientY)/this.zoom, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})
+      console.log(this.lastZ)
+      let newSquare = { x: (this.offsetX() + event.clientX)/this.zoom,
+                        y: (this.offsetY() + event.clientY)/this.zoom,
+                        text: '',
+                        width: 200,
+                        height: 200,
+                        // TODO: Check if the ID already exist
+                        idx: Math.random().toString(36).substring(2),
+                        zIndex: this.lastZ + 1
+                      }
+      this.lastZ = this.lastZ + 1
+      this.addSquare(newSquare)
     },
     handleDropdownMenu: function (event) {
       switch (event) {
@@ -279,6 +336,15 @@ export default {
 
         case 'load':
           this.loadFileVisible = true
+          break
+
+        case 'clear':
+          console.log('REPLACE', stateTemplate)
+          this.$store.replaceState(stateTemplate)
+          this.adjustInitialCanvasSize()
+          this.$nextTick(() => {
+              this.updateConnections()
+          })
           break
       }
     },
@@ -347,6 +413,23 @@ export default {
         this.setWidth(window.innerWidth)
       }
     },
+    adjustCanvasSize: function () {
+      for (var sq of this.allSquares) {
+        console.log('ADJUST', sq.x, sq.width, this.origWidth)
+        if (sq.x + sq.width > this.origWidth) {
+          this.origWidth = (sq.x + sq.width + 20)
+          console.log(this.origWidth)
+        }
+        console.log('ADJUST', sq.y, sq.height, this.origHeight)
+        if (sq.y + sq.height > this.origHeight) {
+          this.origHeight = (sq.y + sq.height + 20)
+          console.log(this.origHeight)
+        }
+      }
+    },
+    minimumHeight: function () {
+       
+    },
     changeZoom: function (inc) {
       if (inc >= 1) {
         if (this.zoom === 0.2) {
@@ -354,6 +437,7 @@ export default {
         }
         this.zoomLevel += 1
         let newZoom = 1  - this.zoomLevel * 0.2
+        this.adjustCanvasSize()
         this.zoom = (newZoom >= 0.2) ? newZoom: 0.2
         this.setWidth(this.origWidth / this.zoom)
         this.setHeight(this.origHeight / this.zoom)
@@ -361,6 +445,7 @@ export default {
       } else {
         console.log('ZOOM IN', this.zoom, this.zoomLevel, this.width, this.height)
         this.zoomLevel -= 1
+        this.adjustCanvasSize()
         this.setWidth(this.origWidth / (1 - this.zoomLevel*0.2))
         this.setHeight(this.origHeight / (1 - this.zoomLevel*0.2))
         this.zoom = 1 - this.zoomLevel * 0.2
@@ -368,9 +453,10 @@ export default {
       }
     },
     onActivated: function (event) {
+      event.zIndex = this.lastZ
       if (this.connectionMode) {
         let sq1 = this.allSquares.find(s => s.idx == this.connectionTmp[0].idx)
-        let sq2 = this.allSquares.find(s => s.idx == event)
+        let sq2 = this.allSquares.find(s => s.idx == event.idx)
 
         this.addConnection({p1: sq1, p2: sq2})
         this.connectionMode = false
@@ -384,6 +470,10 @@ export default {
     onRemoveConnection: function () {
       this.showConnectionEditor = false
       this.removeConnection(this.selectedConnection)
+    },
+    onRemoveSquare: function (square_id) {
+      this.lastZ -= 1
+      this.removeSquare(square_id)
     },
     onMouseoverConnection: function (event, connection) {
       this.conEditorTime = new Date().getMilliseconds()
@@ -432,7 +522,7 @@ export default {
       document.body.removeChild(element)
     },
     ...mapMutations([
-      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection'
+      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState'
     ])
   }
 }
@@ -514,7 +604,7 @@ a {
 
 .toolbar {
   position: fixed;
-  z-index: 11;
+  z-index: 100;
   margin: 20px;
 }
 

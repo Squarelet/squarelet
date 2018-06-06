@@ -1,5 +1,5 @@
 <template>
-  <draggable-resizable @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
+  <draggable-resizable @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
   <el-card :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div v-html="html"></div>
@@ -18,7 +18,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String },
+  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, izIndex: Number },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
@@ -26,6 +26,7 @@ export default {
       height: this.iheight,
       x: this.ix,
       y: this.iy,
+      zIndex: this.izIndex,
       text: this.itext,
       color: (this.icolor)?this.icolor:'#fff',
       idx: this.iidx,
@@ -53,7 +54,7 @@ export default {
   methods: {
     onActivated: function () {
       this.showActions = true
-      this.$emit('activated', this.idx)
+      this.$emit('activated', this)
       this.setEditorState('editing')
     },
     onConnect: function () {
