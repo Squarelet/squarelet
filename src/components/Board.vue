@@ -234,6 +234,13 @@ export default {
         console.log('DRAG')
         console.log(event)
         let sensibility = 0.7
+        if (window.scrollX == window.scrollMaxX) {
+           this.setWidth(this.width + 400)
+        }
+        if (window.scrollY == window.scrollMaxY) {
+           this.setHeight(this.height + 400)
+        }
+ 
         window.scrollBy((this.dragX - event.pageX)*sensibility, (this.dragY - event.pageY)*sensibility)
       }
     },
@@ -440,9 +447,13 @@ export default {
           console.log(this.origHeight)
         }
       }
-      console.log(maxWidth, maxHeight)
-      this.setWidth(maxWidth + 20)
-      this.setHeight(maxHeight + 20)
+      if (maxWidth + 20 >= window.innerWidth) {
+        this.setWidth(maxWidth + 20)
+      }
+
+      if (maxHeight + 20 >= window.innerHeight) {
+        this.setHeight(maxHeight + 20)
+      }
     },
     minimumHeight: function () {
        
