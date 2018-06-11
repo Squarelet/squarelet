@@ -287,8 +287,9 @@ export default {
       this.squareOnZoom = square
       let scale = (window.innerWidth - 80)/square.width
       square.showActions = false
-      this.translateX = -square.x + 40/scale + 'px'
-      this.translateY = -square.y  + 40/scale + 'px'
+      console.log(this.offsetX(), this.offsetY())
+      this.translateX = this.offsetX()/scale + -square.x + 40/scale + 'px'
+      this.translateY = this.offsetY()/scale -square.y  + 40/scale + 'px'
       this.zoom = scale
       this.uiState = uiStates['ZOOM_ON_SQUARE']
     },
@@ -380,7 +381,6 @@ export default {
       }
     },
     onKeyPress: function (event) {
-      console.log(event)
       switch (event.key) {
         case 'z':
           switch (this.uiState) {
@@ -400,6 +400,12 @@ export default {
               break
           }
           break
+        case 'c':
+          switch (this.uiState) {
+            case 0:
+              this.adjustCanvasSize()
+              break
+          }
         default:
           console.log('KEY', event.keyCode);
           break
@@ -414,8 +420,16 @@ export default {
       }
     },
     adjustCanvasSize: function () {
+      var maxWidth = 0
+      var maxHeight = 0
       for (var sq of this.allSquares) {
         console.log('ADJUST', sq.x, sq.width, this.origWidth)
+        if (sq.x + sq.width > maxWidth) {
+           maxWidth = sq.x + sq.width
+        }
+        if (sq.y + sq.height > maxHeight) {
+           maxHeight = sq.y + sq.height
+        }
         if (sq.x + sq.width > this.origWidth) {
           this.origWidth = (sq.x + sq.width + 20)
           console.log(this.origWidth)
@@ -426,6 +440,9 @@ export default {
           console.log(this.origHeight)
         }
       }
+      console.log(maxWidth, maxHeight)
+      this.setWidth(maxWidth + 20)
+      this.setHeight(maxHeight + 20)
     },
     minimumHeight: function () {
        
