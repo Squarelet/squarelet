@@ -1,6 +1,6 @@
 <template>
   <draggable-resizable @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
-  <el-card :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
+  <el-card :class="{'isDark': isDark}" :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div v-html="html"></div>
       </el-row>
@@ -18,7 +18,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, izIndex: Number },
+  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, izIndex: Number, isDark: Boolean },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
@@ -49,6 +49,13 @@ export default {
   computed: {
     html: function () {
       return this.converter.makeHtml(this.text)
+    },
+    squareOpacity: function () {
+      if (this.isDark) {
+        return '0.5'
+      } else {
+        return '1'
+      }
     }
   },
   methods: {
@@ -108,6 +115,10 @@ export default {
 .note {
    height: 100%;
    background-color: rgba(0,0,0,0);
+
+   &.isDark:hover {
+    opacity: 0.6;
+   }
 
    .el-card__body {
      height: 100% !important;

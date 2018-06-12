@@ -58,7 +58,7 @@
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections" :style="{'z-index': s.zIndex}" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
@@ -209,6 +209,13 @@ export default {
     ])
   },
   methods: {
+    squareIsDark: function () {
+      if (this.connectionMode) {
+        return true
+      } else {
+        return false
+      }
+    },
     adjustInitialCanvasSize: function () {
       this.origWidth = window.innerWidth
       this.origHeight = window.innerHeight
