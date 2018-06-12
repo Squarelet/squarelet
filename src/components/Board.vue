@@ -52,6 +52,7 @@
     </div>
     <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg  @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
+        <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX" :y2="dragY" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
         <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
@@ -85,7 +86,12 @@ import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
 import stateTemplate from '../template'
 
-const uiStates = {'DEFAULT': 0, 'SELECTED_SQUARE': 1, 'ZOOM_ON_SQUARE': 2, 'EDITING_SQUARE': 3, 'DRAG': 4}
+const uiStates = { 'DEFAULT': 0,
+                   'SELECTED_SQUARE': 1,
+                   'ZOOM_ON_SQUARE': 2,
+                   'EDITING_SQUARE': 3,
+                   'DRAG': 4,
+                   'CONNECTING': 5}
 
 export default {
   name: 'SquareBoard',
@@ -220,8 +226,8 @@ export default {
       }
     },
     onMouseMove: function (event) {
-      // this.zoomX = event.clientX
-      // this.zoomY = event.clientY
+      this.dragX = event.pageX
+      this.dragY = event.pageY
     },
     onStartDrag: function (event) {
       console.log('START DRAG')
@@ -361,6 +367,7 @@ export default {
     },
     onConnect: function (square) {
       this.connectionMode = true
+      this.uiState = uiStates['CONNECTING']
       this.connectionTmp.push(square)
     },
     onKeyDown: function (event) {
@@ -430,7 +437,6 @@ export default {
       var maxWidth = 0
       var maxHeight = 0
       for (var sq of this.allSquares) {
-        console.log('ADJUST', sq.x, sq.width, this.origWidth)
         if (sq.x + sq.width > maxWidth) {
            maxWidth = sq.x + sq.width
         }
@@ -489,6 +495,7 @@ export default {
         this.addConnection({p1: sq1, p2: sq2})
         this.connectionMode = false
         this.connectionTmp = []
+        this.uiState = uiStates['DEFAULT']
       }
     },
     createConnections: function () {
