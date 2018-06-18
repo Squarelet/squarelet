@@ -2,12 +2,39 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createPersistedState from 'vuex-persistedstate'
 import stateTemplate from './template'
+import Automerge from 'automerge'
+import { sideCoords } from './utils/geom.js'
 
 Vue.use(Vuex)
+
+function closerSides(square1, square2) {
+  let minDistance = 0
+  let minCoords
+  var distance = function (point1, point2) {
+    return Math.pow(point1[0] - point2[0], 2) + Math.pow(point1[1] - point2[1], 2)
+  }
+
+  for (var i = 0; i < 4; ++i) {
+    let point1 = sideCoords(square1, i)
+    for (var j = 0; j < 4; ++j) {
+      let point2 = sideCoords(square2, j)
+      let newDistance = distance(point1, point2)
+      if (minDistance === 0 || newDistance < minDistance) {
+        minDistance = newDistance
+        minCoords = [i, j]
+      }
+    }
+  }
+
+  return minCoords
+}
 
 export default new Vuex.Store({
   state: stateTemplate,
   mutations: {
+    setState (state, newState) {
+      state = newState
+    },
     addSquare (state, square) {
       var newSquares
       if (state.squares.length > 0) {
@@ -23,6 +50,12 @@ export default new Vuex.Store({
     setWidth (state, w) {
       Vue.set(state, 'width', w)
     },
+    updateHistory (state, changes) {
+      console.log('OBJ', state.history)
+      let history = Automerge.load(localStorage.getItem('history'))
+      let newHistory = Automerge.applyChanges(history, changes)
+      localStorage.setItem('history', Automerge.save(newHistory))
+    },
     setHeight (state, h) {
       Vue.set(state, 'height', h)
     },
@@ -34,6 +67,14 @@ export default new Vuex.Store({
     },
     setSquares (state, s) {
       Vue.set(state, 'squares', s)
+    },
+    updateSquareConnections (state, square) {
+      for (var i in state.connections) {
+        let con = state.connections[i]
+        if (con.p1.idx === square.idx || con.p2.idx === square.idx) {
+          con.coords = closerSides(con.p1, con.p2)
+        }
+      }
     },
     setConnections (state, cs) {
       Vue.set(state, 'connections', cs)
@@ -103,6 +144,9 @@ export default new Vuex.Store({
            return;
          }
       }
+
+      connection.coords = closerSides(connection.p1, connection.p2)
+
       let nc = [...state.connections, connection]
       Vue.set(state, 'connections', nc)
     }
@@ -120,6 +164,16 @@ export default new Vuex.Store({
     state: function (state) { return state },
     minWidth: function (state) { return state.minWidth },
     minHeight: function (state) { return state.minHeight },
+    history: function (state) {
+      let history = localStorage.getItem('history')
+      if (!history) {
+        let startHistory = Automerge.init()
+        localStorage.setItem('history', Automerge.save(startHistory))
+        return startHistory
+      } else {
+        return Automerge.load(history)
+      }
+    },
     lastZ: function (state) { return state.lastZ }
   },
   plugins: [createPersistedState()]

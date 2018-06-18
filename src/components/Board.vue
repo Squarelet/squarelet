@@ -47,18 +47,16 @@
           <el-button type="primary" @click="backgroundSettingsVisible = false">Confirm</el-button>
         </span>
       </el-dialog>
-    <!-- <el-button @click="addSquare({x:20, y: offsetY() + 80, text: '', width: 200, height: 200, idx: Math.random().toString(36).substring(2)})" type="primary" icon="el-icon-circle-plus">Add</el-button>
-      <el-button @click="isCollapse = false" type="primary" icon="el-icon-check">Save</el-button> -->
     </div>
     <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg  @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX/zoom" :y2="dragY/zoom" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
-        <line @click="onClickConnection($event, c)" :x1="c.p1.x + c.p1.width" :y1="c.p1.y + c.p1.height/2.0" :x2="c.p2.x" :y2="c.p2.y + c.p2.height/2.0" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
+        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
@@ -85,6 +83,8 @@ import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
 import stateTemplate from '../template'
+import { sideCoords } from '../utils/geom.js'
+import Automerge from 'automerge'
 
 const uiStates = { 'DEFAULT': 0,
                    'SELECTED_SQUARE': 1,
@@ -101,6 +101,57 @@ export default {
   sockets: {
     'squares': function (data) {
       // this.$store.replaceState(data)
+      let changes = JSON.parse(data)
+      this.updateHistory(changes)
+      // let newAutomergeState = Automerge.applyChanges(this.automergeState, changes)
+      //console.log(this.automergeState)
+      var newState = {}
+      for (var k in this.history) {
+        switch (k) {
+          case 'squares':
+            newState['squares'] = []
+            for (var s of this.history[k]) {
+              var nsq = {}
+              for (var si in s) {
+                nsq[si] = s[si]
+              }
+              newState['squares'].push(nsq)
+            }
+            break
+          case 'connections':
+            newState['connections'] = []
+            for (var c of this.history[k]) {
+              var nc = {}
+              for (var i in c) {
+                nc[i] = c[i]
+              }
+              newState['connections'].push(nc)
+            }
+          default:
+            newState[k] = this.history[k]
+            break
+        }
+      }
+
+      // localStorage.clear()
+      // this.$store.replaceState(newState)
+      // localStorage.setItem('vuex', JSON.stringify(newState))
+      // this.setState(newState)
+      this.adjustInitialCanvasSize()
+      this.$nextTick(() => {
+          // this.$store.replaceState(newState)
+          this.updateConnections()
+      })
+    },
+    'updateBgcolor': function (data) {
+       this.setBgcolor(data)
+    },
+    'updateState': function (data) {
+       // this.$store.replaceState(JSON.parse(data))
+       // this.adjustInitialCanvasSize()
+       // this.$nextTick(() => {
+       //     this.updateConnections()
+       // })
     }
   },
   data: function () {
@@ -108,6 +159,7 @@ export default {
       lastZ: 1,
       uiState: uiStates['DEFAULT'],
       squareOnZoom: {},
+      automergeState: Automerge.init(),
       selectedConnection: {},
       conEditorTime: 0,
       showConnectionEditor: false,
@@ -160,7 +212,7 @@ export default {
 
     this.adjustInitialCanvasSize()
     // Get highest z index
-    for (sq in this.squares) {
+    for (var sq in this.allSquares) {
       if (sq.zIndex > this.lastZ) {
         this.lastZ = sq.zIndex
       }
@@ -168,8 +220,15 @@ export default {
 
     this.$nextTick(() => {
       this.updateConnections()
-      // let vuex = localStorage.getItem('vuex')
-      // this.$socket.emit('update', vuex)
+      let vuex = JSON.parse(localStorage.getItem('vuex'))
+      let newAutomergeState = Automerge.change(this.history, doc => {
+        for (var k in vuex) {
+         doc[k] = vuex[k]
+        }
+      })
+
+      let changes = Automerge.getChanges(this.history, newAutomergeState)
+      this.$socket.emit('update', JSON.stringify(changes))
     })
 
   },
@@ -205,10 +264,15 @@ export default {
       }
     },
     ...mapGetters([
-      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state'
+      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state', 'history'
     ])
   },
   methods: {
+    connectionCoords: function (connection) {
+      let coords1 = sideCoords(connection.p1, connection.coords[0])
+      let coords2 = sideCoords(connection.p2, connection.coords[1])
+      return [coords1, coords2]
+    },
     squareIsDark: function () {
       if (this.connectionMode) {
         return true
@@ -237,15 +301,12 @@ export default {
       this.dragY = event.pageY
     },
     onStartDrag: function (event) {
-      console.log('START DRAG')
       this.uiState = uiStates['DRAG']
       this.dragX = event.pageX
       this.dragY = event.pageY
     },
     onDrag: function (event) {
       if (this.uiState === uiStates['DRAG']) {
-        console.log('DRAG')
-        console.log(event)
         let sensibility = 0.7
         if (window.scrollX == window.scrollMaxX) {
            this.setWidth(this.width + 400)
@@ -253,14 +314,12 @@ export default {
         if (window.scrollY == window.scrollMaxY) {
            this.setHeight(this.height + 400)
         }
- 
         window.scrollBy((this.dragX - event.pageX)*sensibility, (this.dragY - event.pageY)*sensibility)
       }
     },
     onStopDrag: function (event) {
       if (this.uiState === uiStates['DRAG']) {
         this.uiState = uiStates['DEFAULT']
-        console.log('STOP DRAG')
       }
     },
     onTouchRight: function () {
@@ -307,14 +366,12 @@ export default {
       this.squareOnZoom = square
       let scale = (window.innerWidth - 80)/square.width
       square.showActions = false
-      console.log(this.offsetX(), this.offsetY())
       this.translateX = this.offsetX()/scale + -square.x + 40/scale + 'px'
       this.translateY = this.offsetY()/scale -square.y  + 40/scale + 'px'
       this.zoom = scale
       this.uiState = uiStates['ZOOM_ON_SQUARE']
     },
     updateConnections: function () {
-      console.log('UPDATE')
       let cs = this.allConnections
       if (cs) {
         let new_cs = []
@@ -322,7 +379,7 @@ export default {
            let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
            let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
 
-           new_cs.push({p1: sq1, p2: sq2})
+           new_cs.push({p1: sq1, p2: sq2, coords: cs[i].coords})
         }
         this.setConnections(new_cs)
       } else {
@@ -332,7 +389,6 @@ export default {
     addSquareOnCursor: function (event) {
       if (event.stopPropagation) event.stopPropagation()
       if (event.preventDefault) event.preventDefault()
-      console.log(this.lastZ)
       let newSquare = { x: (this.offsetX() + event.clientX)/this.zoom,
                         y: (this.offsetY() + event.clientY)/this.zoom,
                         text: '',
@@ -344,6 +400,8 @@ export default {
                       }
       this.lastZ = this.lastZ + 1
       this.addSquare(newSquare)
+      let vuex = localStorage.getItem('vuex')
+      this.$socket.emit('update', JSON.stringify(vuex))
     },
     handleDropdownMenu: function (event) {
       switch (event) {
@@ -360,7 +418,6 @@ export default {
           break
 
         case 'clear':
-          console.log('REPLACE', stateTemplate)
           this.$store.replaceState(stateTemplate)
           this.adjustInitialCanvasSize()
           this.$nextTick(() => {
@@ -371,6 +428,7 @@ export default {
     },
     onChangeBgcolor: function (color) {
       this.bgcolor = color
+      this.$socket.emit('updateBgcolor', color)
     },
     onConnect: function (square) {
       this.connectionMode = true
@@ -382,7 +440,6 @@ export default {
         case uiStates['DEFAULT']:
           switch (event.key) {
             default:
-              console.log(event)
               break
           }
           break
@@ -428,7 +485,6 @@ export default {
               break
           }
         default:
-          console.log('KEY', event.keyCode);
           break
       }
     },
@@ -452,12 +508,9 @@ export default {
         }
         if (sq.x + sq.width > this.origWidth) {
           this.origWidth = (sq.x + sq.width + 20)
-          console.log(this.origWidth)
         }
-        console.log('ADJUST', sq.y, sq.height, this.origHeight)
         if (sq.y + sq.height > this.origHeight) {
           this.origHeight = (sq.y + sq.height + 20)
-          console.log(this.origHeight)
         }
       }
       if (maxWidth + 20 >= window.innerWidth) {
@@ -482,15 +535,12 @@ export default {
         this.zoom = (newZoom >= 0.2) ? newZoom: 0.2
         this.setWidth(this.origWidth / this.zoom)
         this.setHeight(this.origHeight / this.zoom)
-        console.log('ZOOM OUT',  this.zoom, this.zoomLevel, this.width, this.height)
       } else {
-        console.log('ZOOM IN', this.zoom, this.zoomLevel, this.width, this.height)
         this.zoomLevel -= 1
         this.adjustCanvasSize()
         this.setWidth(this.origWidth / (1 - this.zoomLevel*0.2))
         this.setHeight(this.origHeight / (1 - this.zoomLevel*0.2))
         this.zoom = 1 - this.zoomLevel * 0.2
-        console.log('ZOOM IN', this.zoom, this.zoomLevel, this.width, this.height)
       }
     },
     onActivated: function (event) {
@@ -505,7 +555,8 @@ export default {
         this.uiState = uiStates['DEFAULT']
       }
     },
-    createConnections: function () {
+    createConnections: function (square) {
+      this.updateSquareConnections(square)
     },
     onClickLine: function (connection) {
     },
@@ -564,7 +615,7 @@ export default {
       document.body.removeChild(element)
     },
     ...mapMutations([
-      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState'
+      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState', 'setBgcolor', 'updateHistory', 'updateSquareConnections'
     ])
   }
 }
