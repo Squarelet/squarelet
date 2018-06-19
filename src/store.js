@@ -100,19 +100,9 @@ export default new Vuex.Store({
     removeSquare (state, idx) {
       let foundSquare = state.squares.findIndex(s => s.idx == idx)
       if (foundSquare >= 0) {
+        let newConnections = state.connections.filter(c => c.p1.idx !== idx && c.p2.idx !== idx)
+        Vue.set(state, 'connections', newConnections)
         state.squares.splice(foundSquare, 1)
-        let deleteConnections = []
-        for (let i = 0; i < state.connections.length; ++i) {
-          let connection = state.connections[i]
-          if (connection.p1.idx === idx || connection.p2.idx === idx) {
-            deleteConnections.push(i)
-          }
-        }
-        let d = 0
-        for (let i = 0; i < deleteConnections.length; ++i) {
-          state.connections.splice(deleteConnections[i - d], 1)
-          d += 1
-        }
       }
     },
     saveSquares (state) {
