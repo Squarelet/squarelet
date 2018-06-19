@@ -49,7 +49,7 @@
       </el-dialog>
     </div>
     <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
-      <svg  @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
+      <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX/zoom" :y2="dragY/zoom" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
         <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
       </svg>
@@ -67,6 +67,10 @@
         <el-button class="action right" @click="onRemoveSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
         <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
+    </div>
+    <div v-if="uiState === 6" class="quickEditor" :style="{'top': quickEditorY + 'px', 'left': quickEditorX + 'px'}">
+      <!-- <input type="text" ref="quickEdit" value=""> -->
+      <markdown-editor @mousedown.stop.prevent='quick' ref="quickEdit" :id="'contentEditor'" v-model="newSquareText" :height="300" :zIndex="20" :autofocus="true"></markdown-editor>
     </div>
     <div @click="closeEditorOnClick($event)" class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
       <div class="square-editor" :style="{'opacity': (showEditor)? (editorOpacity): '0', 'visibility': (showEditor)? 'visible' : 'hidden'}">
@@ -91,7 +95,9 @@ const uiStates = { 'DEFAULT': 0,
                    'ZOOM_ON_SQUARE': 2,
                    'EDITING_SQUARE': 3,
                    'DRAG': 4,
-                   'CONNECTING': 5}
+                   'CONNECTING': 5,
+                   'QUICK_EDIT': 6
+                 }
 
 export default {
   name: 'SquareBoard',
@@ -172,6 +178,9 @@ export default {
       dragY: 0,
       zoomX: 0,
       zoomY: 0,
+      newSquareText: '',
+      quickEditorX: 0,
+      quickEditorY: 0,
       predefineColors: [
         '#ff4500',
         '#ff8c00',
@@ -268,6 +277,9 @@ export default {
     ])
   },
   methods: {
+    quick: function () {
+      console.log('CLICO') 
+    },
     connectionCoords: function (connection) {
       let coords1 = sideCoords(connection.p1, connection.coords[0])
       let coords2 = sideCoords(connection.p2, connection.coords[1])
@@ -301,9 +313,18 @@ export default {
       this.dragY = event.pageY
     },
     onStartDrag: function (event) {
-      this.uiState = uiStates['DRAG']
-      this.dragX = event.pageX
-      this.dragY = event.pageY
+      if (event.target.classList[0] === 'backgroundScreen') {
+        switch (this.uiState) {
+          case 6:
+            this.addSquareQuickEditor()
+            break
+          default:
+            this.uiState = uiStates['DRAG']
+            this.dragX = event.pageX
+            this.dragY = event.pageY
+            break
+        }
+      }
     },
     onDrag: function (event) {
       if (this.uiState === uiStates['DRAG']) {
@@ -386,12 +407,12 @@ export default {
         this.setConnections([])
       }
     },
-    addSquareOnCursor: function (event) {
-      if (event.stopPropagation) event.stopPropagation()
-      if (event.preventDefault) event.preventDefault()
-      let newSquare = { x: (this.offsetX() + event.clientX)/this.zoom,
-                        y: (this.offsetY() + event.clientY)/this.zoom,
-                        text: '',
+    addSquareQuickEditor: function (event) {
+      // console.log(this.$refs.quickEdit.value)
+      // let text = this.$refs.quickEdit.value
+      let newSquare = { x: this.quickEditorX/this.zoom,
+                        y: this.quickEditorY/this.zoom,
+                        text: this.newSquareText,
                         width: 200,
                         height: 200,
                         // TODO: Check if the ID already exist
@@ -400,8 +421,34 @@ export default {
                       }
       this.lastZ = this.lastZ + 1
       this.addSquare(newSquare)
+      // this.$refs.quickEdit.value = ''
+      this.newSquareText = ''
+      this.uiState = uiStates['DEFAULT']
       let vuex = localStorage.getItem('vuex')
       this.$socket.emit('update', JSON.stringify(vuex))
+    },
+    addSquareOnCursor: function (event) {
+      if (event.stopPropagation) event.stopPropagation()
+      if (event.preventDefault) event.preventDefault()
+
+      this.uiState = uiStates['QUICK_EDIT']
+      this.quickEditorX = (this.offsetX() + event.clientX)
+      this.quickEditorY = (this.offsetY() + event.clientY)
+      // this.$refs.quickEdit.focus()
+
+      // let newSquare = { x: (this.offsetX() + event.clientX)/this.zoom,
+      //                   y: (this.offsetY() + event.clientY)/this.zoom,
+      //                   text: '',
+      //                   width: 200,
+      //                   height: 200,
+      //                   // TODO: Check if the ID already exist
+      //                   idx: Math.random().toString(36).substring(2),
+      //                   zIndex: this.lastZ + 1
+      //                 }
+      // this.lastZ = this.lastZ + 1
+      // this.addSquare(newSquare)
+      // let vuex = localStorage.getItem('vuex')
+      // this.$socket.emit('update', JSON.stringify(vuex))
     },
     handleDropdownMenu: function (event) {
       switch (event) {
@@ -484,7 +531,16 @@ export default {
               this.adjustCanvasSize()
               break
           }
+          break
+        case 'Enter':
+          switch (this.uiState) {
+            case uiStates['QUICK_EDIT']:
+              this.addSquareQuickEditor()
+              break
+          }
+          break
         default:
+          console.log(event.key)
           break
       }
     },
@@ -617,6 +673,20 @@ export default {
     ...mapMutations([
       'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState', 'setBgcolor', 'updateHistory', 'updateSquareConnections'
     ])
+  },
+  watch: {
+    uiState: function (newState, oldState) {
+      console.log(oldState, newState)
+      switch (newState) {
+        default:
+          switch (oldState) {
+            case uiStates['QUICK_EDIT']:
+              break
+            default:
+              break
+        }
+      }
+    }
   }
 }
 </script>
@@ -732,6 +802,19 @@ a {
       float: right;
     }
   }
+}
+
+.quickEditor {
+   position: absolute;
+   padding: 20px;
+   background: white;
+   z-index: 50;
+   input {
+      background: white;
+      border: none;
+      font-size: 36px;
+      color: black;
+   }
 }
 
 </style>
