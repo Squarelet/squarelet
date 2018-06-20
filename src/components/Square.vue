@@ -8,6 +8,9 @@
   <el-card v-else-if="type === 'image'" :class="{'isDark': isDark}"  :style="{'border': border}" :body-style="{ height: '100%', 'background-color': 'rgba(0,0,0,0)', 'overflow-y': 'auto', 'padding': 0}" class="note image">
     <img :src="square.imageURL">
   </el-card>
+  <el-card v-else-if="type === 'website'" :class="{'isDark': isDark}"  :style="{'border': border}" :body-style="{ height: '100%', 'background-color': 'rgba(0,0,0,0)', 'overflow-y': 'auto', 'padding': 0}" class="note website">
+    <iframe scroll="true" :width="width" :height="height" :src="square.websiteURL"></iframe>
+  </el-card>
   </draggable-resizable>
 </template>
 
@@ -33,6 +36,7 @@ export default {
       zIndex: this.izIndex,
       text: this.itext,
       imageURL: (this.isquare.imageURL)?this.isquare.imageURL:'',
+      websiteURL: (this.isquare.websiteURL)?this.isquare.websiteURL:'',
       color: (this.icolor)?this.icolor:'#fff',
       borderSize: (this.isquare.borderSize)?this.isquare.borderSize:1,
       borderColor: (this.isquare.borderColor)?this.isquare.borderColor:'#fff',
@@ -134,6 +138,11 @@ export default {
 
    &.isDark:hover {
     opacity: 0.6;
+   }
+
+   &.website {
+    padding: 20px;
+    background-color: white;
    }
 
    &.image {

@@ -10,10 +10,14 @@
             <el-select @change="onChangeType" v-model="square.type">
               <el-option label="Markdown" value="markdown"></el-option>
               <el-option label="Image" value="image"></el-option>
+              <el-option label="Website" value="website"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item v-if="square.type === 'image'">
+          <el-form-item v-if="square.type === 'image'" label="Image URL">
             <el-input v-model="square.imageURL" @change="onChangeImageURL"></el-input>
+          </el-form-item>
+          <el-form-item v-if="square.type === 'website'" label="URL">
+            <el-input v-model="square.websiteURL" @change="onChangeWebsiteURL"></el-input>
           </el-form-item>
           <el-form-item label="Square color">
             <el-color-picker
@@ -83,6 +87,9 @@ export default {
     },
     onChangeImageURL: function (url) {
       this.square.imageURL = url
+    },
+    onChangeWebsiteURL: function (url) {
+      this.square.websiteURL = url
     }
   }
 }
