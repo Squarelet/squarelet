@@ -1,6 +1,6 @@
 <template>
   <draggable-resizable @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
-  <el-card v-if="type === 'square'" :class="{'isDark': isDark}" :body-style="{ height: '100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
+  <el-card v-if="type === 'markdown'" :class="{'isDark': isDark}" :body-style="{ height: '100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div v-html="html"></div>
       </el-row>
@@ -37,7 +37,7 @@ props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Numbe
       idx: this.iidx,
       showActions: false,
       editing: false,
-      type: 'square',
+      type: (this.itype)?this.itype:'markdown',
       predefineColors: [
           '#ff4500',
           '#ff8c00',
