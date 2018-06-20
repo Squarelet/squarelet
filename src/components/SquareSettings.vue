@@ -31,6 +31,17 @@
           <el-form-item label="Text size">
             <el-input-number v-model="square.textSize" @change="onChangeTextSize" :min="10" :max="100"></el-input-number>
           </el-form-item>
+          <el-form-item label="Border size">
+            <el-input-number v-model="square.borderSize" @change="onChangeBorderSize" :min="0" :max="20"></el-input-number>
+          </el-form-item>
+          <el-form-item label="Border color">
+            <el-color-picker
+              v-model="square.borderColor"
+              show-alpha
+              @active-change="onChangeBorderColor"
+              >
+            </el-color-picker>
+          </el-form-item>
         </el-form>
         <span slot="footer" class="dialog-footer">
           <el-button @click="$emit('squareSettingsClose')" type="primary" >Ok</el-button>
@@ -57,6 +68,12 @@ export default {
     },
     onChangeTextSize: function (color) {
       this.square.textSize = color
+    },
+    onChangeBorderSize: function (size) {
+      this.square.borderSize = size
+    },
+    onChangeBorderColor: function (color) {
+      this.square.borderColor = color
     }
   }
 }

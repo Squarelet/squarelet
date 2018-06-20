@@ -1,6 +1,6 @@
 <template>
   <draggable-resizable @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
-  <el-card v-if="type === 'markdown'" :class="{'isDark': isDark}" :body-style="{ height: '100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
+  <el-card v-if="type === 'markdown'" :class="{'isDark': isDark}" :style="{'border': border}" :body-style="{ height: '100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div v-html="html"></div>
       </el-row>
@@ -21,10 +21,11 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean },
+  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
+      square: this.isquare,
       width: this.iwidth,
       height: this.iheight,
       x: this.ix,
@@ -32,6 +33,8 @@ props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Numbe
       zIndex: this.izIndex,
       text: this.itext,
       color: (this.icolor)?this.icolor:'#fff',
+      borderSize: (this.isquare.borderSize)?this.isquare.borderSize:1,
+      borderColor: (this.isquare.borderColor)?this.isquare.borderColor:'#fff',
       textColor: (this.itextcolor)?this.itextcolor:'#000',
       textSize: (this.itextsize)?this.itextsize:16,
       idx: this.iidx,
@@ -58,6 +61,9 @@ props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Numbe
     },
     textSizePx: function () {
       return this.textSize + 'px'
+    },
+    border: function () {
+      return this.borderSize + 'px solid ' + this.borderColor
     },
     squareOpacity: function () {
       if (this.isDark) {
