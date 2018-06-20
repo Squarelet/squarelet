@@ -7,10 +7,13 @@
         <p/>
         <el-form>
           <el-form-item label="Square type">
-            <el-select v-model="square.type">
+            <el-select @change="onChangeType" v-model="square.type">
               <el-option label="Markdown" value="markdown"></el-option>
               <el-option label="Image" value="image"></el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item v-if="square.type === 'image'">
+            <el-input v-model="square.imageURL" @change="onChangeImageURL"></el-input>
           </el-form-item>
           <el-form-item label="Square color">
             <el-color-picker
@@ -60,6 +63,9 @@ export default {
     }
   },
   methods: {
+    onChangeType: function (type) {
+      this.square.type = type
+    },
     onChangeColor: function (color) {
       this.square.color = color
     },
@@ -74,6 +80,9 @@ export default {
     },
     onChangeBorderColor: function (color) {
       this.square.borderColor = color
+    },
+    onChangeImageURL: function (url) {
+      this.square.imageURL = url
     }
   }
 }

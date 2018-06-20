@@ -5,8 +5,8 @@
       <div v-html="html"></div>
       </el-row>
   </el-card>
-  <el-card v-else-if="type === 'image'" :class="{'isDark': isDark}" :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
-
+  <el-card v-else-if="type === 'image'" :class="{'isDark': isDark}"  :style="{'border': border}" :body-style="{ height: '100%', 'background-color': 'rgba(0,0,0,0)', 'overflow-y': 'auto', 'padding': 0}" class="note image">
+    <img :src="square.imageURL">
   </el-card>
   </draggable-resizable>
 </template>
@@ -21,7 +21,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object },
+  props: { zoom: Number, itype: String, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
@@ -32,6 +32,7 @@ export default {
       y: this.iy,
       zIndex: this.izIndex,
       text: this.itext,
+      imageURL: (this.isquare.imageURL)?this.isquare.imageURL:'',
       color: (this.icolor)?this.icolor:'#fff',
       borderSize: (this.isquare.borderSize)?this.isquare.borderSize:1,
       borderColor: (this.isquare.borderColor)?this.isquare.borderColor:'#fff',
@@ -133,6 +134,19 @@ export default {
 
    &.isDark:hover {
     opacity: 0.6;
+   }
+
+   &.image {
+    padding: 0;
+    img {
+      width: 100%;
+    }
+
+    .el-card__body {
+      height: 100% !important;
+      padding: 0;
+    }
+
    }
 
    .el-card__body {
