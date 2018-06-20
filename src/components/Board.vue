@@ -25,6 +25,7 @@
         </el-dropdown-menu>
       </el-dropdown>
       <LoadFile @updatedState="updateConnections" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
+      <SquareSettings @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
       <el-dialog
         title="Background settings"
         :visible.sync="backgroundSettingsVisible"
@@ -56,7 +57,7 @@
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 20)*zoom}px`, 'height': '40px'}">
@@ -64,6 +65,7 @@
         <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onConnect(s)" type="success" icon="el-icon-share" circle></el-button>
         <el-button class="action" @click="zoomSquare(s)" type="success" icon="el-icon-zoom-in" circle></el-button>
+        <el-button class="action" @click="squareSettings(s)" type="success" icon="el-icon-setting" circle></el-button>
         <el-button class="action right" @click="onRemoveSquare(s.idx)" type="danger" icon="el-icon-delete" circle></el-button>
         <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
@@ -86,6 +88,7 @@ import MarkdownEditor from './MarkdownEditor'
 import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
+import SquareSettings from './SquareSettings'
 import stateTemplate from '../template'
 import { sideCoords } from '../utils/geom.js'
 import Automerge from 'automerge'
@@ -101,7 +104,7 @@ const uiStates = { 'DEFAULT': 0,
 
 export default {
   name: 'SquareBoard',
-  components: { Square, MarkdownEditor, LoadFile },
+  components: { Square, MarkdownEditor, LoadFile, SquareSettings },
   props: {
   },
   sockets: {
@@ -209,7 +212,8 @@ export default {
       translateX: 0,
       translateY: 0,
       showEditor: false,
-      backgroundSettingsVisible: false
+      backgroundSettingsVisible: false,
+      squareSettingsVisible: false
     }
   },
   created () {
@@ -277,8 +281,9 @@ export default {
     ])
   },
   methods: {
-    quick: function () {
-      console.log('CLICO') 
+    squareSettings: function (square) {
+      this.editSquare = square
+      this.squareSettingsVisible = true
     },
     connectionCoords: function (connection) {
       let coords1 = sideCoords(connection.p1, connection.coords[0])
@@ -809,6 +814,7 @@ a {
    padding: 20px;
    background: white;
    z-index: 50;
+   min-width: 500px;
    input {
       background: white;
       border: none;

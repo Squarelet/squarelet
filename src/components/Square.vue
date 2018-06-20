@@ -1,10 +1,13 @@
 <template>
   <draggable-resizable @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
-  <el-card :class="{'isDark': isDark}" :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
+  <el-card v-if="type === 'square'" :class="{'isDark': isDark}" :body-style="{ height: '100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div v-html="html"></div>
       </el-row>
-    </el-card>
+  </el-card>
+  <el-card v-else-if="type === 'image'" :class="{'isDark': isDark}" :body-style="{ height: '100%', 'background-color': color, 'overflow-y': 'auto'}" class="note">
+
+  </el-card>
   </draggable-resizable>
 </template>
 
@@ -18,7 +21,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-  props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, izIndex: Number, isDark: Boolean },
+props: { zoom: Number, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
@@ -29,9 +32,12 @@ export default {
       zIndex: this.izIndex,
       text: this.itext,
       color: (this.icolor)?this.icolor:'#fff',
+      textColor: (this.itextcolor)?this.itextcolor:'#000',
+      textSize: (this.itextsize)?this.itextsize:16,
       idx: this.iidx,
       showActions: false,
       editing: false,
+      type: 'square',
       predefineColors: [
           '#ff4500',
           '#ff8c00',
@@ -49,6 +55,9 @@ export default {
   computed: {
     html: function () {
       return this.converter.makeHtml(this.text)
+    },
+    textSizePx: function () {
+      return this.textSize + 'px'
     },
     squareOpacity: function () {
       if (this.isDark) {
