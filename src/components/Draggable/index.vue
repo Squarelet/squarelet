@@ -293,6 +293,7 @@ export default {
       this.resizing = true
     },
     fillParent: function (e) {
+      this.$emit('dblClickSquare', e)
       if (!this.parent || !this.resizable || !this.maximize) return
 
       let done = false

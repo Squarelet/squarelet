@@ -57,7 +57,7 @@
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" :itype="s.type" :isquare="s" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square @dblClickSquare="openEditor(s, $event)" @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" :itype="s.type" :isquare="s" v-for="(s, index) in allSquares" :key="s.idx"></Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 60)*zoom}px`, 'height': '40px'}">
@@ -70,9 +70,10 @@
         <!-- <el-button :style="{'background-color': s.color, 'border-color': 'rgba(0,0,0,0.3)'}"  @click="s.selectColor()" type="success" icon="el-icon-edit" circle></el-button> -->
       </el-row>
     </div>
-    <div v-if="uiState === 6" class="quickEditor" :style="{'top': quickEditorY + 'px', 'left': quickEditorX + 'px'}">
-      <!-- <input type="text" ref="quickEdit" value=""> -->
-      <markdown-editor @mousedown.stop.prevent='quick' ref="quickEdit" :id="'contentEditor'" v-model="newSquareText" :height="300" :zIndex="20" :autofocus="true"></markdown-editor>
+    <div v-if="uiState === 6" class="quickEditor" @click="closeQuickEditor" :style="{height: heightN + 'px', width: widthN + 'px'}">
+      <draggable-resizable v-on:dragging="onDragQuickEditor" :x="quickEditorX" :y="quickEditorY" :w="300" :h="300" :parent="true" :zoom="zoom">
+        <markdown-editor @mousedown.stop.prevent='quick' ref="quickEdit" :id="'contentEditor'" v-model="newSquareText" :zIndex="20" :autofocus="true"></markdown-editor>
+      </draggable-resizable>
     </div>
     <div @click="closeEditorOnClick($event)" class="cover" :style="{'z-index': (showEditor)?'15':'0'}">
       <div class="square-editor" :style="{'opacity': (showEditor)? (editorOpacity): '0', 'visibility': (showEditor)? 'visible' : 'hidden'}">
@@ -85,6 +86,7 @@
 <script>
 
 import MarkdownEditor from './MarkdownEditor'
+import DraggableResizable from './Draggable'
 import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
@@ -104,7 +106,7 @@ const uiStates = { 'DEFAULT': 0,
 
 export default {
   name: 'SquareBoard',
-  components: { Square, MarkdownEditor, LoadFile, SquareSettings },
+  components: { Square, MarkdownEditor, LoadFile, SquareSettings, DraggableResizable },
   props: {
   },
   sockets: {
@@ -222,6 +224,7 @@ export default {
     window.addEventListener('scroll', this.onScroll)
     window.addEventListener('resize', this.onResize)
     window.addEventListener('mousemove', this.onMouseMove)
+    window.addEventListener('wheel', this.onMouseWheel)
 
     this.adjustInitialCanvasSize()
     // Get highest z index
@@ -412,6 +415,11 @@ export default {
         this.setConnections([])
       }
     },
+    closeQuickEditor: function (event) {
+      if (event.target.className === 'quickEditor') {
+        this.addSquareQuickEditor()
+      }
+    },
     addSquareQuickEditor: function (event) {
       // console.log(this.$refs.quickEdit.value)
       // let text = this.$refs.quickEdit.value
@@ -439,6 +447,10 @@ export default {
 
       this.uiState = uiStates['QUICK_EDIT']
       this.quickEditorX = (this.offsetX() + event.clientX)
+      console.log(window.innerWidth, this.quickEditorX + 300)
+      if (this.quickEditorX + 300 >= window.innerWidth) {
+         this.quickEditorX = this.quickEditorX - 300
+      }
       this.quickEditorY = (this.offsetY() + event.clientY)
       // this.$refs.quickEdit.focus()
 
@@ -487,6 +499,32 @@ export default {
       this.connectionMode = true
       this.uiState = uiStates['CONNECTING']
       this.connectionTmp.push(square)
+    },
+    onMouseWheel: function (event) {
+      event.preventDefault()
+      if (event.deltaY < 0) {
+        // window.scrollBy(event.clientX/this.zoom, 0)
+        let oldZoom = this.zoom
+        this.changeZoom(-1)
+
+        console.log(event.clientX, event.clientY, this.zoom, this.oldZoom)
+        let diffX = (event.clientX*this.zoom - event.clientX*oldZoom)
+        let diffY = (event.clientY*this.zoom - event.clientY*oldZoom)
+
+        window.scrollBy(diffX, diffY)
+      } else {
+        // window.scrollBy(-event.clientX/this.zoom, 0)
+        let oldZoom = this.zoom
+        console.log('OLD ZOOM', oldZoom)
+        this.changeZoom(1)
+        console.log('OLD ZOOM', oldZoom)
+        let diffX = (event.clientX*oldZoom - event.clientX*this.zoom)
+        let diffY = (event.clientY*oldZoom - event.clientY*this.zoom)
+
+      console.log('ZOOM OUT', event.clientX, event.clientY, this.zoom)
+        window.scrollBy(-diffX, -diffY)
+ 
+      }
     },
     onKeyDown: function (event) {
       switch (this.uiState) {
@@ -600,8 +638,13 @@ export default {
       } else {
         this.zoomLevel -= 1
         this.adjustCanvasSize()
-        this.setWidth(this.origWidth / (1 - this.zoomLevel*0.2))
-        this.setHeight(this.origHeight / (1 - this.zoomLevel*0.2))
+        if (this.zoomLevel >= 0) {
+          this.setWidth(this.origWidth / (1 - this.zoomLevel*0.2))
+          this.setHeight(this.origHeight / (1 - this.zoomLevel*0.2))
+        } else {
+          this.setWidth(this.origWidth * (1 - this.zoomLevel*0.2))
+          this.setHeight(this.origHeight * (1 - this.zoomLevel*0.2))
+        }
         this.zoom = 1 - this.zoomLevel * 0.2
       }
     },
@@ -651,6 +694,11 @@ export default {
       // let middleX = connection.p1.x + (connection.p1.x - connection.p2.x)/2.0
       // this.conEditorLeft = event.clientX + 'px'
       // this.conEditorTop = this.offsetY() + event.clientY + 'px'
+    },
+    onDragQuickEditor: function (x, y) {
+      console.log('IS DRAG', x,y, this.quickEditorY, this.quickEditorX, this.zoom)
+      this.quickEditorY = y
+      this.quickEditorX = x
     },
     checkTimeoutConEditor: function () {
       let now = new Date().getMilliseconds()
@@ -712,7 +760,7 @@ export default {
     position: absolute;
     width: 100%;
     vertical-align: top;
-    transition: transform 0.5s;
+    // transition: transform 0.5s;
   }
 }
 
@@ -731,6 +779,8 @@ export default {
 
 .square-editor {
   visibility: hidden;
+  position: fixed;
+  height: 100%;
   opacity: 0;
   transition: z-index 0.3s, visibility 0.3s, opacity 0.3s linear;
   min-height: 50%;
@@ -812,9 +862,14 @@ a {
 
 .quickEditor {
    position: absolute;
-   padding: 20px;
+   top: 0;
+   left: 0;
+   bottom: 0;
+   width: 100%;
+   height: 100%;
    background: white;
    z-index: 50;
+   background: none;
    min-width: 500px;
    input {
       background: white;

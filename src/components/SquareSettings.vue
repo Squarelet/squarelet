@@ -1,7 +1,7 @@
 <template>
       <el-dialog
         title="Square Settings"
-        :visible="visible"
+        :visible.sync="visible"
         :modal="false"
         width="30%">
         <p/>
