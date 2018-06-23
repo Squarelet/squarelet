@@ -392,13 +392,13 @@ export default {
       this.squareOnZoom.showActions = true
     },
     zoomSquare: function (square) {
+      this.uiState = uiStates['ZOOM_ON_SQUARE']
       this.squareOnZoom = square
       let scale = (window.innerWidth - 80)/square.width
       square.showActions = false
       this.translateX = this.offsetX()/scale + -square.x + 40/scale + 'px'
       this.translateY = this.offsetY()/scale -square.y  + 40/scale + 'px'
       this.zoom = scale
-      this.uiState = uiStates['ZOOM_ON_SQUARE']
     },
     updateConnections: function () {
       let cs = this.allConnections
@@ -427,7 +427,7 @@ export default {
                         y: this.quickEditorY/this.zoom,
                         text: this.newSquareText,
                         width: 200,
-                        height: 200,
+                        height: -1,
                         type: 'markdown',
                         // TODO: Check if the ID already exist
                         idx: Math.random().toString(36).substring(2),
@@ -501,29 +501,29 @@ export default {
       this.connectionTmp.push(square)
     },
     onMouseWheel: function (event) {
-      event.preventDefault()
-      if (event.deltaY < 0) {
-        // window.scrollBy(event.clientX/this.zoom, 0)
-        let oldZoom = this.zoom
-        this.changeZoom(-1)
+      if (this.uiState == uiStates['DEFAULT']) {
+        event.preventDefault()
+        if (event.deltaY < 0) {
+          // window.scrollBy(event.clientX/this.zoom, 0)
+          let oldZoom = this.zoom
+          this.changeZoom(-1)
 
-        console.log(event.clientX, event.clientY, this.zoom, this.oldZoom)
-        let diffX = (event.clientX*this.zoom - event.clientX*oldZoom)
-        let diffY = (event.clientY*this.zoom - event.clientY*oldZoom)
+          console.log(event.clientX, event.clientY, this.zoom, this.oldZoom)
+          let diffX = (event.clientX*this.zoom - event.clientX*oldZoom)
+          let diffY = (event.clientY*this.zoom - event.clientY*oldZoom)
 
-        window.scrollBy(diffX, diffY)
-      } else {
-        // window.scrollBy(-event.clientX/this.zoom, 0)
-        let oldZoom = this.zoom
-        console.log('OLD ZOOM', oldZoom)
-        this.changeZoom(1)
-        console.log('OLD ZOOM', oldZoom)
-        let diffX = (event.clientX*oldZoom - event.clientX*this.zoom)
-        let diffY = (event.clientY*oldZoom - event.clientY*this.zoom)
-
-      console.log('ZOOM OUT', event.clientX, event.clientY, this.zoom)
-        window.scrollBy(-diffX, -diffY)
- 
+          window.scrollBy(diffX, diffY)
+        } else {
+          // window.scrollBy(-event.clientX/this.zoom, 0)
+          let oldZoom = this.zoom
+          console.log('OLD ZOOM', oldZoom)
+          this.changeZoom(1)
+          console.log('OLD ZOOM', oldZoom)
+          let diffX = (event.clientX*oldZoom - event.clientX*this.zoom)
+          let diffY = (event.clientY*oldZoom - event.clientY*this.zoom)
+        console.log('ZOOM OUT', event.clientX, event.clientY, this.zoom)
+          window.scrollBy(-diffX, -diffY)
+        }
       }
     },
     onKeyDown: function (event) {

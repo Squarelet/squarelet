@@ -1,5 +1,6 @@
 <template>
   <div
+    :ref="`drag-${iidx}`"
     class="vdr"
     :style="style"
     :class="{
@@ -54,21 +55,15 @@ export default {
     },
     h: {
       type: Number,
-      default: 200,
-      validator: function (val) {
-        return val > 0
-      }
+      default: -1
     },
     minw: {
       type: Number,
       default: 50,
-      validator: function (val) {
-        return val > 0
-      }
     },
     minh: {
       type: Number,
-      default: 50,
+      default: 10,
       validator: function (val) {
         return val > 0
       }
@@ -132,6 +127,9 @@ export default {
     },
     maximize: {
       type: Boolean, default: false
+    },
+    iidx: {
+      type: String
     }
   },
 
@@ -171,6 +169,10 @@ export default {
     this.elmW = this.$el.offsetWidth || this.$el.clientWidth
     this.elmH = this.$el.offsetHeight || this.$el.clientHeight
 
+    let refs = this.$refs
+    if (this.height < 0) {
+      this.height = this.$el.getBoundingClientRect().height
+    }
     this.reviewDimensions()
   },
   beforeDestroy: function () {
@@ -189,12 +191,13 @@ export default {
       top: this.y,
       left: this.x,
       width: this.w,
-      height: this.h,
+      height: -1,
       resizing: false,
       dragging: false,
       enabled: this.active,
       handle: null,
-      zIndex: this.z
+      zIndex: this.z,
+      idx: this.iidx
     }
   },
 
@@ -202,7 +205,7 @@ export default {
     reviewDimensions: function () {
       if (this.minw > this.w) this.width = this.minw
 
-      if (this.minh > this.h) this.height = this.minh
+      // if (this.minh > this.h) this.height = this.minh
 
       if (this.parent) {
         const parentW = parseInt(this.$el.parentNode.clientWidth, 10)
@@ -453,11 +456,13 @@ export default {
 
   computed: {
     style: function () {
+      let refs = this.$refs
       return {
         top: this.top + 'px',
         left: this.left + 'px',
         width: this.width + 'px',
-        height: this.height + 'px',
+        // height: this.height + 'px',
+        height: (this.height < 0)?'auto':this.height + 'px',
         zIndex: this.zIndex
       }
     },
