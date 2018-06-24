@@ -53,7 +53,7 @@
     <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX/zoom" :y2="dragY/zoom" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
-        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key="c.idx"  :style="{'stroke': c.color, 'stroke-width': c.width}"/>
+        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key="c.idx" :stroke-dasharray="(c.dashed)?`${c.dashedA}, ${c.dashedB}`:'5,0'" :style="{'stroke': c.color, 'stroke-width': c.width}"/>
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onEditConnection" type="success" icon="el-icon-edit" circle></el-button>
@@ -416,7 +416,14 @@ export default {
            let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
            let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
 
-           new_cs.push({p1: sq1, p2: sq2, coords: cs[i].coords, color: cs[i].color, width: cs[i].width})
+           new_cs.push({p1: sq1,
+                        p2: sq2,
+                        coords: cs[i].coords,
+                        color: cs[i].color,
+                        width: cs[i].width,
+                        dashed: cs[i].dashed,
+                        dashedA: cs[i].dashedA,
+                        dashedB: cs[i].dashedB})
         }
         this.setConnections(new_cs)
       } else {

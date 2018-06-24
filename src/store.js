@@ -137,6 +137,9 @@ export default new Vuex.Store({
 
       connection.color = 'rgb(140, 182, 164)'
       connection.width = 5
+      connection.dashed = false
+      connection.dashedA = 5
+      connection.dashedB = 5
       connection.idx = Math.random().toString(36).substring(2)
       connection.coords = closerSides(connection.p1, connection.p2)
 
