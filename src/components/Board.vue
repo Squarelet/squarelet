@@ -677,14 +677,15 @@ export default {
       this.conEditorTime = new Date().getMilliseconds()
       this.showConnectionEditor = true
       window.setInterval(this.checkTimeoutConEditor, 200)
-      this.conEditorLeft = event.clientX + 'px'
+      console.log(this.offsetX(), event.clientX)
+      this.conEditorLeft = this.offsetX() + event.clientX + 'px'
       this.conEditorTop = this.offsetY() + event.clientY + 'px'
     },
     onClickConnection: function (event, connection) {
       this.showConnectionEditor = true
       this.selectedConnection = connection
-      this.conEditorLeft = event.clientX + 'px'
-      this.conEditorTop = this.offsetY() + event.clientY + 'px'
+      this.conEditorLeft = (this.offsetX() + event.clientX)/this.zoom + 'px'
+      this.conEditorTop = (this.offsetY() + event.clientY)/this.zoom + 'px'
     },
     onMouseoutConnection: function (event, connection) {
       let now = new Date().getMilliseconds()
