@@ -26,6 +26,7 @@
       </el-dropdown>
       <LoadFile @updatedState="updateConnections" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
       <SquareSettings @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
+      <ConnectionSettings @connectionSettingsClose="showConnectionEditor = false; connectionSettingsVisible = false" :visible="connectionSettingsVisible" :connection="editConnection"></ConnectionSettings>
       <el-dialog
         title="Background settings"
         :visible.sync="backgroundSettingsVisible"
@@ -52,9 +53,10 @@
     <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX/zoom" :y2="dragY/zoom" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
-        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key=index style="stroke:rgb(140, 182, 164);stroke-width:5" />
+        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key="c.idx"  :style="{'stroke': c.color, 'stroke-width': c.width}"/>
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
+        <el-button class="action" @click="onEditConnection" type="success" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
       <Square @dblClickSquare="openEditor(s, $event)" @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" :itype="s.type" :isquare="s" v-for="(s, index) in allSquares" :key="s.idx"></Square>
@@ -62,7 +64,7 @@
     <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 60)*zoom}px`, 'height': '40px'}">
       <el-row class="actions" v-if="s.showActions">
-        <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button>
+        <!-- <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button> -->
         <el-button class="action" @click="onConnect(s)" type="success" icon="el-icon-share" circle></el-button>
         <el-button class="action" @click="zoomSquare(s)" type="success" icon="el-icon-zoom-in" circle></el-button>
         <el-button class="action" @click="squareSettings(s)" type="success" icon="el-icon-setting" circle></el-button>
@@ -91,6 +93,7 @@ import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
 import LoadFile from './LoadFiles'
 import SquareSettings from './SquareSettings'
+import ConnectionSettings from './ConnectionSettings'
 import stateTemplate from '../template'
 import { sideCoords } from '../utils/geom.js'
 import Automerge from 'automerge'
@@ -106,7 +109,7 @@ const uiStates = { 'DEFAULT': 0,
 
 export default {
   name: 'SquareBoard',
-  components: { Square, MarkdownEditor, LoadFile, SquareSettings, DraggableResizable },
+  components: { Square, MarkdownEditor, LoadFile, SquareSettings, ConnectionSettings, DraggableResizable },
   props: {
   },
   sockets: {
@@ -203,6 +206,7 @@ export default {
         '#c7158577'
       ],
       editSquare: {},
+      editConnection: {},
       editorOpacity: 1,
       zoom: 1,
       zoomLevel: 0,
@@ -215,7 +219,8 @@ export default {
       translateY: 0,
       showEditor: false,
       backgroundSettingsVisible: false,
-      squareSettingsVisible: false
+      squareSettingsVisible: false,
+      connectionSettingsVisible: false
     }
   },
   created () {
@@ -284,6 +289,9 @@ export default {
     ])
   },
   methods: {
+    onEditConnection: function () {
+      this.connectionSettingsVisible = true
+    },
     squareSettings: function (square) {
       this.editSquare = square
       this.squareSettingsVisible = true
@@ -408,7 +416,7 @@ export default {
            let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
            let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
 
-           new_cs.push({p1: sq1, p2: sq2, coords: cs[i].coords})
+           new_cs.push({p1: sq1, p2: sq2, coords: cs[i].coords, color: cs[i].color, width: cs[i].width})
         }
         this.setConnections(new_cs)
       } else {
@@ -597,7 +605,6 @@ export default {
       }
     },
     adjustCanvasSize: function () {
-      var maxWidth = 0
       var maxHeight = 0
       for (var sq of this.allSquares) {
         if (sq.x + sq.width > maxWidth) {
@@ -682,6 +689,7 @@ export default {
       this.conEditorTop = this.offsetY() + event.clientY + 'px'
     },
     onClickConnection: function (event, connection) {
+      this.editConnection = connection
       this.showConnectionEditor = true
       this.selectedConnection = connection
       this.conEditorLeft = (this.offsetX() + event.clientX)/this.zoom + 'px'
