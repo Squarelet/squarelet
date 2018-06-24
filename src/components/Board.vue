@@ -605,7 +605,7 @@ export default {
       }
     },
     adjustCanvasSize: function () {
-      var maxHeight = 0
+      var maxHeight = 0, maxWidth = 0
       for (var sq of this.allSquares) {
         if (sq.x + sq.width > maxWidth) {
            maxWidth = sq.x + sq.width
