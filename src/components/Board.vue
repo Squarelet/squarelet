@@ -111,63 +111,64 @@ export default {
   name: 'SquareBoard',
   components: { Square, MarkdownEditor, LoadFile, SquareSettings, ConnectionSettings, DraggableResizable },
   props: {
+    startPad: {}
   },
-  sockets: {
-    'squares': function (data) {
-      // this.$store.replaceState(data)
-      let changes = JSON.parse(data)
-      this.updateHistory(changes)
-      // let newAutomergeState = Automerge.applyChanges(this.automergeState, changes)
-      //console.log(this.automergeState)
-      var newState = {}
-      for (var k in this.history) {
-        switch (k) {
-          case 'squares':
-            newState['squares'] = []
-            for (var s of this.history[k]) {
-              var nsq = {}
-              for (var si in s) {
-                nsq[si] = s[si]
-              }
-              newState['squares'].push(nsq)
-            }
-            break
-          case 'connections':
-            newState['connections'] = []
-            for (var c of this.history[k]) {
-              var nc = {}
-              for (var i in c) {
-                nc[i] = c[i]
-              }
-              newState['connections'].push(nc)
-            }
-          default:
-            newState[k] = this.history[k]
-            break
-        }
-      }
+  //sockets: {
+  // 'squares': function (data) {
+      // // this.$store.replaceState(data)
+      // let changes = JSON.parse(data)
+      // this.updateHistory(changes)
+      // // let newAutomergeState = Automerge.applyChanges(this.automergeState, changes)
+      // //console.log(this.automergeState)
+      // var newState = {}
+      // for (var k in this.history) {
+      //   switch (k) {
+      //     case 'squares':
+      //       newState['squares'] = []
+      //       for (var s of this.history[k]) {
+      //         var nsq = {}
+      //         for (var si in s) {
+      //           nsq[si] = s[si]
+      //         }
+      //         newState['squares'].push(nsq)
+      //       }
+      //       break
+      //     case 'connections':
+      //       newState['connections'] = []
+      //       for (var c of this.history[k]) {
+      //         var nc = {}
+      //         for (var i in c) {
+      //           nc[i] = c[i]
+      //         }
+      //         newState['connections'].push(nc)
+      //       }
+      //     default:
+      //       newState[k] = this.history[k]
+      //       break
+      //   }
+      // }
 
-      // localStorage.clear()
-      // this.$store.replaceState(newState)
-      // localStorage.setItem('vuex', JSON.stringify(newState))
-      // this.setState(newState)
-      this.adjustInitialCanvasSize()
-      this.$nextTick(() => {
-          // this.$store.replaceState(newState)
-          this.updateConnections()
-      })
-    },
-    'updateBgcolor': function (data) {
-       this.setBgcolor(data)
-    },
-    'updateState': function (data) {
-       // this.$store.replaceState(JSON.parse(data))
-       // this.adjustInitialCanvasSize()
-       // this.$nextTick(() => {
-       //     this.updateConnections()
-       // })
-    }
-  },
+      // // localStorage.clear()
+      // // this.$store.replaceState(newState)
+      // // localStorage.setItem('vuex', JSON.stringify(newState))
+      // // this.setState(newState)
+      // this.adjustInitialCanvasSize()
+      // this.$nextTick(() => {
+      //     // this.$store.replaceState(newState)
+      //     this.updateConnections()
+      // })
+   // },
+   // 'updateBgcolor': function (data) {
+   //    this.setBgcolor(data)
+   // },
+   // 'updateState': function (data) {
+   //    // this.$store.replaceState(JSON.parse(data))
+   //    // this.adjustInitialCanvasSize()
+   //    // this.$nextTick(() => {
+   //    //     this.updateConnections()
+   //    // })
+   // }
+  // },
   data: function () {
     return {
       lastZ: 1,
@@ -249,7 +250,7 @@ export default {
       })
 
       let changes = Automerge.getChanges(this.history, newAutomergeState)
-      this.$socket.emit('update', JSON.stringify(changes))
+      // this.$socket.emit('update', JSON.stringify(changes))
     })
 
   },
@@ -345,11 +346,9 @@ export default {
     onDrag: function (event) {
       if (this.uiState === uiStates['DRAG']) {
         let sensibility = 0.7
-        console.log('BORDER', window.scrollX, window.scrollMaxX)
         if (window.scrollX >= window.scrollMaxX) {
            this.setWidth(this.width + 400)
         }
-        console.log('BORDER Y', window.scrollY, window.scrollMaxY)
         if (window.scrollY >= window.scrollMaxY) {
            this.setHeight(this.height + 400)
         }
@@ -438,8 +437,6 @@ export default {
       }
     },
     addSquareQuickEditor: function (event) {
-      // console.log(this.$refs.quickEdit.value)
-      // let text = this.$refs.quickEdit.value
       let newSquare = { x: this.quickEditorX/this.zoom,
                         y: this.quickEditorY/this.zoom,
                         text: this.newSquareText,
@@ -456,7 +453,7 @@ export default {
       this.newSquareText = ''
       this.uiState = uiStates['DEFAULT']
       let vuex = localStorage.getItem('vuex')
-      this.$socket.emit('update', JSON.stringify(vuex))
+      // this.$socket.emit('update', JSON.stringify(vuex))
     },
     addSquareOnCursor: function (event) {
       if (event.stopPropagation) event.stopPropagation()
@@ -464,7 +461,6 @@ export default {
 
       this.uiState = uiStates['QUICK_EDIT']
       this.quickEditorX = (this.offsetX() + event.clientX)
-      console.log(window.innerWidth, this.quickEditorX + 300)
       if (this.quickEditorX + 300 >= window.innerWidth) {
          this.quickEditorX = this.quickEditorX - 300
       }
@@ -510,7 +506,7 @@ export default {
     },
     onChangeBgcolor: function (color) {
       this.bgcolor = color
-      this.$socket.emit('updateBgcolor', color)
+      // this.$socket.emit('updateBgcolor', color)
     },
     onConnect: function (square) {
       this.connectionMode = true
@@ -525,7 +521,6 @@ export default {
           let oldZoom = this.zoom
           this.changeZoom(-1)
 
-          console.log(event.clientX, event.clientY, this.zoom, this.oldZoom)
           let diffX = (event.clientX*this.zoom - event.clientX*oldZoom)
           let diffY = (event.clientY*this.zoom - event.clientY*oldZoom)
 
@@ -533,12 +528,9 @@ export default {
         } else {
           // window.scrollBy(-event.clientX/this.zoom, 0)
           let oldZoom = this.zoom
-          console.log('OLD ZOOM', oldZoom)
           this.changeZoom(1)
-          console.log('OLD ZOOM', oldZoom)
           let diffX = (event.clientX*oldZoom - event.clientX*this.zoom)
           let diffY = (event.clientY*oldZoom - event.clientY*this.zoom)
-        console.log('ZOOM OUT', event.clientX, event.clientY, this.zoom)
           window.scrollBy(-diffX, -diffY)
         }
       }
@@ -693,7 +685,6 @@ export default {
       this.conEditorTime = new Date().getMilliseconds()
       this.showConnectionEditor = true
       window.setInterval(this.checkTimeoutConEditor, 200)
-      console.log(this.offsetX(), event.clientX)
       this.conEditorLeft = this.offsetX() + event.clientX + 'px'
       this.conEditorTop = this.offsetY() + event.clientY + 'px'
     },
@@ -714,7 +705,6 @@ export default {
       // this.conEditorTop = this.offsetY() + event.clientY + 'px'
     },
     onDragQuickEditor: function (x, y) {
-      console.log('IS DRAG', x,y, this.quickEditorY, this.quickEditorX, this.zoom)
       this.quickEditorY = y
       this.quickEditorX = x
     },
@@ -748,7 +738,6 @@ export default {
   },
   watch: {
     uiState: function (newState, oldState) {
-      console.log(oldState, newState)
       switch (newState) {
         default:
           switch (oldState) {
