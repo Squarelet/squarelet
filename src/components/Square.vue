@@ -1,5 +1,5 @@
 <template>
-  <draggable-resizable :ref="`note-${idx}`" :iidx="idx" @dblClickSquare="$emit('dblClickSquare', $event)" @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :height="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
+  <draggable-resizable :ref="`note-${idx}`" :iidx="idx" @dblClickSquare="$emit('dblClickSquare', $event)" @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
   <el-card v-if="type === 'markdown'" :class="{'isDark': isDark}" :style="{'border': border}" :body-style="{ height: (height < 0)?'auto':'100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
       <el-row>
       <div ref="noteContent" v-html="html"></div>
@@ -81,8 +81,8 @@ export default {
   mounted () {
     let refs = this.$refs
     if (this.height < 0) {
-      this.height = refs['note-' + this.idx].$el.getBoundingClientRect().height
-      this.updateSquare(this._data)
+       this.height = refs['note-' + this.idx].$el.getBoundingClientRect().height
+       this.updateSquare(this._data)
     }
   },
   methods: {

@@ -25,7 +25,7 @@
         </el-dropdown-menu>
       </el-dropdown>
       <LoadFile @updatedState="updateConnections" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
-      <SquareSettings @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
+      <SquareSettings @close="squareSettingsVisible = false" @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
       <ConnectionSettings @connectionSettingsClose="showConnectionEditor = false; connectionSettingsVisible = false" :visible="connectionSettingsVisible" :connection="editConnection"></ConnectionSettings>
       <el-dialog
         title="Background settings"
@@ -345,10 +345,12 @@ export default {
     onDrag: function (event) {
       if (this.uiState === uiStates['DRAG']) {
         let sensibility = 0.7
-        if (window.scrollX == window.scrollMaxX) {
+        console.log('BORDER', window.scrollX, window.scrollMaxX)
+        if (window.scrollX >= window.scrollMaxX) {
            this.setWidth(this.width + 400)
         }
-        if (window.scrollY == window.scrollMaxY) {
+        console.log('BORDER Y', window.scrollY, window.scrollMaxY)
+        if (window.scrollY >= window.scrollMaxY) {
            this.setHeight(this.height + 400)
         }
         window.scrollBy((this.dragX - event.pageX)*sensibility, (this.dragY - event.pageY)*sensibility)

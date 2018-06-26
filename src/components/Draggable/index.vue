@@ -191,7 +191,7 @@ export default {
       top: this.y,
       left: this.x,
       width: this.w,
-      height: -1,
+      height: this.h,
       resizing: false,
       dragging: false,
       enabled: this.active,
@@ -206,6 +206,7 @@ export default {
       if (this.minw > this.w) this.width = this.minw
 
       // if (this.minh > this.h) this.height = this.minh
+      this.height = this.h
 
       if (this.parent) {
         const parentW = parseInt(this.$el.parentNode.clientWidth, 10)
