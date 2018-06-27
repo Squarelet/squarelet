@@ -240,6 +240,7 @@ export default {
     }
   },
   created () {
+    console.log('UNDEFINED', this.iboardId)
     if (this.startPad) {
       this.setState({ boardId: this.boardId, newState: this.startPad })
     }
@@ -541,6 +542,7 @@ export default {
     },
     changeBoard: function (event) {
       this.boardId = event
+      //this.$router.push({path: `/b/${this.boardId}`})
       this.adjustInitialCanvasSize()
       // Get highest z index
       for (var sq in this.allSquares(this.boardId)) {
@@ -550,10 +552,11 @@ export default {
       }
       this.$nextTick(() => {
         this.updateConnections()
+        this.$router.push({path: `/b/${this.boardId}`})
       })
     },
     createBoard: function (event) {
-      this.setState({ boardId: event, newState: stateTemplate['defaultBoard'] })
+      this.setState({ boardId: event, newState: Object.assign({}, stateTemplate['defaultBoard']) })
       this.boardId = event
       this.adjustInitialCanvasSize()
       // Get highest z index
@@ -562,6 +565,7 @@ export default {
           this.lastZ = sq.zIndex
         }
       }
+      this.$router.push({path: `/b/${this.boardId}`})
     },
     onMouseWheel: function (event) {
       if (this.uiState == uiStates['DEFAULT']) {
@@ -797,19 +801,6 @@ export default {
               break
         }
       }
-    },
-    '$route': function (to, from) {
-      this.$nextTick(() => {
-        this.updateConnections()
-        // let vuex = JSON.parse(localStorage.getItem('vuex'))
-        // let newAutomergeState = Automerge.change(this.history, doc => {
-        //   for (var k in vuex) {
-        //    doc[k] = vuex[k]
-        //   }
-        // })
-        // let changes = Automerge.getChanges(this.history, newAutomergeState)
-        // this.$socket.emit('update', JSON.stringify(changes))
-      })
     }
   }
 }

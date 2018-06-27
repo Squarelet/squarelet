@@ -20,8 +20,7 @@ export default new Router({
       props: { iboardId: 'about', startPad: startPad }
     },
     {
-      path: '/:iboardId',
-      name: 'About',
+      path: '/b/:iboardId',
       component: Home,
       props: true
     }

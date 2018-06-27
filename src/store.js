@@ -30,7 +30,7 @@ function closerSides(square1, square2) {
 }
 
 export default new Vuex.Store({
-  state: stateTemplate,
+  state: Object.assign({}, stateTemplate),
   mutations: {
     setState (state, { boardId, newState }) {
       // state = { ...state, [boardId]: newState }
@@ -103,10 +103,10 @@ export default new Vuex.Store({
         Vue.set(state, boardId, { ...state[boardId], squares: newSquares })
       }
     },
-    setBgcolor (state, { boardId, bgcolor }) {
+    setBgcolor (state, { boardId, color }) {
       // Vue.set(state, 'bgcolor', bgcolor)
       // state = { ...state, [boardId]: { ...state[boardId], bgcolor: bgcolor } }
-      Vue.set(state, boardId, { ...state[boardId], bgcolor: bgcolor })
+      Vue.set(state, boardId, { ...state[boardId], bgcolor: color })
     },
     setBgurl (state, { boardId, bgurl }) {
       // Vue.set(state, 'bgurl', bgurl)
