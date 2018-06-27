@@ -10,13 +10,20 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: Home
+      component: Home,
+      props: { iboardId: 'defaultBoard' }
     },
     {
       path: '/about',
       name: 'About',
       component: Home,
-      props: { startPad: startPad }
+      props: { iboardId: 'about', startPad: startPad }
+    },
+    {
+      path: '/:iboardId',
+      name: 'About',
+      component: Home,
+      props: true
     }
   ]
 })

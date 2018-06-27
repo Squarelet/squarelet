@@ -32,103 +32,111 @@ function closerSides(square1, square2) {
 export default new Vuex.Store({
   state: stateTemplate,
   mutations: {
-    setState (state, newState) {
-      state = newState
+    setState (state, { boardId, newState }) {
+      // state = { ...state, [boardId]: newState }
+      Vue.set(state, boardId, newState)
     },
-    addSquare (state, square) {
+    addSquare (state, { boardId, square }) {
       var newSquares
-      if (state.squares.length > 0) {
-        newSquares = [...state.squares, square]
+      if (state[boardId].squares.length > 0) {
+        newSquares = [ ...state[boardId].squares, square ]
       } else {
-        newSquares = [square]
+        newSquares = [ square ]
       }
-      Vue.set(state, 'squares', newSquares)
+      // Vue.set(state, 'squares', newSquares)
+      // state = { ...state, [boardId]: { ...state[boardId], squares: newSquares } }
+      Vue.set(state, boardId, { ...state[boardId], squares: newSquares })
     },
     setEditorState (state, editorState) {
       Vue.set(state, 'editorState', editorState)
     },
-    setWidth (state, w) {
-      Vue.set(state, 'width', w)
+    setWidth (state, { boardId, w }) {
+      // Vue.set(state, 'width', w)
+      // state = { ...state, [boardId]: { ...state[boardId], width: w } }
+      Vue.set(state, boardId, { ...state[boardId], width: w } )
     },
     updateHistory (state, changes) {
-      console.log('OBJ', state.history)
       let history = Automerge.load(localStorage.getItem('history'))
       let newHistory = Automerge.applyChanges(history, changes)
       localStorage.setItem('history', Automerge.save(newHistory))
     },
-    setHeight (state, h) {
-      Vue.set(state, 'height', h)
+    setHeight (state, { boardId, h }) {
+      // Vue.set(state, 'height', h)
+      // state = { ...state, [boardId]: { ...state[boardId], height: h } }
+      Vue.set(state, boardId, { ...state[boardId], height: h })
     },
-    setLastZ (state, z) {
-       Vue.set(state, 'lastZ', z)
+    setLastZ (state, { boardId, z }) {
+      // Vue.set(state, 'lastZ', z)
+       //state = { ...state, [boardId]: { ...state[boardId], lastZ: z } }
+      Vue.set(state, boardId, { ...state[boardId], lastZ: z })
     },
-    changeHeight (state, delta) {
-      Vue.set(state, 'height', state.height + delta)
+    changeHeight (state, { boardId, delta }) {
+      // Vue.set(state, 'height', state.height + delta)
+      // state = { ...state, [boardId]: { ...state[boardId], height: state[boardId]['height'] + delta } }
+      Vue.set(state, boardId, { ...state[boardId], height: state[boardId]['height'] + delta })
     },
-    setSquares (state, s) {
-      Vue.set(state, 'squares', s)
+    setSquares (state, { boardId, s }) {
+      // Vue.set(state, 'squares', s)
+      // state = { ...state, [boardId]: { ...state[boardId], squares: s } }
+      Vue.set(state, boardId, { ...state[boardId], squares: s })
     },
-    updateSquareConnections (state, square) {
-      for (var i in state.connections) {
-        let con = state.connections[i]
+    updateSquareConnections (state, { boardId, square }) {
+      for (var i in state[boardId].connections) {
+        let con = state[boardId].connections[i]
         if (con.p1.idx === square.idx || con.p2.idx === square.idx) {
           con.coords = closerSides(con.p1, con.p2)
         }
       }
     },
-    setConnections (state, cs) {
-      Vue.set(state, 'connections', cs)
+    setConnections (state, { boardId, connections }) {
+      // Vue.set(state, 'connections', cs)
+      // state = { ...state, [boardId]: { ...state[boardId], connections: cs } }
+      Vue.set(state, boardId, { ...state[boardId], connections: connections })
     },
-    updateSquare (state, sq) {
-      let foundSquare = state.squares.findIndex(s => s.idx === sq.idx)
+    updateSquare (state, { boardId, square }) {
+      let foundSquare = state[boardId].squares.findIndex(s => s.idx === square.idx)
       if (foundSquare >= 0) {
-        Vue.set(state.squares, foundSquare, sq)
+        // Vue.set(state.squares, foundSquare, sq)
+        let newSquares = state[boardId].squares
+        newSquares[foundSquare] = square
+        // state = { ...state, [boardId]: { ...state[boardId], squares: newSquares } }
+        Vue.set(state, boardId, { ...state[boardId], squares: newSquares })
       }
     },
-    setBgcolor (state, bgcolor) {
-      Vue.set(state, 'bgcolor', bgcolor)
+    setBgcolor (state, { boardId, bgcolor }) {
+      // Vue.set(state, 'bgcolor', bgcolor)
+      // state = { ...state, [boardId]: { ...state[boardId], bgcolor: bgcolor } }
+      Vue.set(state, boardId, { ...state[boardId], bgcolor: bgcolor })
     },
-    setBgurl (state, bgurl) {
-      Vue.set(state, 'bgurl', bgurl)
+    setBgurl (state, { boardId, bgurl }) {
+      // Vue.set(state, 'bgurl', bgurl)
+      // state = { ...state, [boardId]: { ...state[boardId], bgurl: bgurl } }
+      Vue.set(state, boardId, { ...state[boardId], bgurl: bgurl })
     },
-    removeConnection (state, connection) {
-      let foundConnection = state.connections.findIndex(c => c == connection)
+    removeConnection (state, { boardId, connection }) {
+      let foundConnection = state[boardId].connections.findIndex(c => c == connection)
       if (foundConnection >= 0) {
-          state.connections.splice(foundConnection, 1)
+          state[boardId].connections.splice(foundConnection, 1)
       }
     },
-    removeSquare (state, idx) {
-      let foundSquare = state.squares.findIndex(s => s.idx == idx)
+    removeSquare (state, { boardId, idx }) {
+      let foundSquare = state[boardId].squares.findIndex(s => s.idx == idx)
       if (foundSquare >= 0) {
-        let newConnections = state.connections.filter(c => c.p1.idx !== idx && c.p2.idx !== idx)
-        Vue.set(state, 'connections', newConnections)
-        state.squares.splice(foundSquare, 1)
+        let newConnections = state[boardId].connections.filter(c => c.p1.idx !== idx && c.p2.idx !== idx)
+        // Vue.set(state, 'connections', newConnections)
+        // state = { ...state, [boardId]: { ...state[boardId], connections: newConnections } }
+        Vue.set(state, boardId, { ...state[boardId], connections: newConnections })
+        state[boardId].squares.splice(foundSquare, 1)
       }
     },
-    saveSquares (state) {
-      let ss = []
-      for (let i = 0; i < state.squares.length; ++i) {
-         ss.push(state.squares[i]._data)
-      }
-      localStorage.setItem('squares', JSON.stringify(ss))
-
-      let cs = []
-      for (let i = 0; i < state.connections.length; ++i) {
-        cs.push({p1: state.connections[i].p1._data, p2: state.connections[i].p2._data})
-      }
-
-      localStorage.setItem('connections', JSON.stringify(cs))
-      localStorage.setItem('height', JSON.stringify(state.height))
-      localStorage.setItem('width', JSON.stringify(state.width))
-    },
-    addConnection (state, connection) {
+    addConnection (state, { boardId, connection }) {
       // Don't allow connection with itself (for now at least)
       if (connection.p1.idx === connection.p2.idx) {
         return
       }
       // Don't add duplicate connections
-      for (let i = 0; i < state.connections.length; ++i) {
-         let c = state.connections[i]
+      for (let i = 0; i < state[boardId].connections.length; ++i) {
+         let c = state[boardId].connections[i]
          if ((c.p1.idx === connection.p1.idx && c.p2.idx === connection.p2.idx) ||
              (c.p1.idx === connection.p2.idx && c.p2.idx === connection.p1.idx)) {
            return;
@@ -143,34 +151,27 @@ export default new Vuex.Store({
       connection.idx = Math.random().toString(36).substring(2)
       connection.coords = closerSides(connection.p1, connection.p2)
 
-      let nc = [...state.connections, connection]
-      Vue.set(state, 'connections', nc)
+      let nc = [...state[boardId].connections, connection]
+      // Vue.set(state, 'connections', nc)
+      // state = { ...state, [boardId]: { ...state[boardId], connections: nc } }
+      Vue.set(state, boardId, { ...state[boardId], connections: nc })
     }
   },
   actions: {
 
   },
   getters: {
-    allSquares: function (state) { return state.squares },
-    allConnections: function (state) { return state.connections },
-    height: function (state) { return state.height },
-    width: function (state) { return state.width },
-    editorState: function (state) { return state.editorState },
-    bgcolor: function (state) { return state.bgcolor },
-    state: function (state) { return state },
-    minWidth: function (state) { return state.minWidth },
-    minHeight: function (state) { return state.minHeight },
-    history: function (state) {
-      let history = localStorage.getItem('history')
-      if (!history) {
-        let startHistory = Automerge.init()
-        localStorage.setItem('history', Automerge.save(startHistory))
-        return startHistory
-      } else {
-        return Automerge.load(history)
-      }
-    },
-    lastZ: function (state) { return state.lastZ }
+    allSquares: (state) => (boardId) => { return state[boardId].squares },
+    allConnections: (state) => (boardId) => { return state[boardId].connections },
+    height: (state) => (boardId) => { return state[boardId].height },
+    width: (state) => (boardId) => { return state[boardId].width },
+    editorState: (state) => (boardId) => { return state[boardId].editorState },
+    bgcolor: (state) => (boardId) => { return state[boardId].bgcolor },
+    state: (state) => (boardId) => { return state[boardId] },
+    minWidth: (state) => (boardId) => { return state[boardId].minWidth },
+    minHeight: (state) => (boardId) => { return state[boardId].minHeight },
+    lastZ: (state) => (boardId) => { return state[boardId].lastZ },
+    boards: (state) => { return Object.keys(state).filter(i => i !== 'editorState') }
   },
   plugins: [createPersistedState()]
 })

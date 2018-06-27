@@ -24,7 +24,7 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-  props: { zoom: Number, itype: String, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object },
+  props: { boardId: String, zoom: Number, itype: String, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
@@ -82,7 +82,7 @@ export default {
     let refs = this.$refs
     if (this.height < 0) {
        this.height = refs['note-' + this.idx].$el.getBoundingClientRect().height
-       this.updateSquare(this._data)
+       this.updateSquare({ boardId: this.boardId, square: this._data })
     }
   },
   methods: {
@@ -99,12 +99,12 @@ export default {
       this.y = y
       this.width = width
       this.height = height
-      this.updateSquare(this._data)
+      this.updateSquare({ boardId: this.boardId, square: this._data })
     },
     onDrag: function (x, y) {
       this.x = x
       this.y = y
-      this.updateSquare(this._data)
+      this.updateSquare({ boardId: this.boardId, square: this._data })
       this.$emit('squaresMoved')
     },
     onSelectColor: function (event) {

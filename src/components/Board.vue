@@ -10,6 +10,9 @@
         </el-button>
         <el-dropdown-menu slot="dropdown">
           <template slot="title">Edit</template>
+          <el-dropdown-item command="boards">
+            <i class="el-icon-document"></i> Board
+          </el-dropdown-item>
           <el-dropdown-item command="background">
             <i class="el-icon-picture"></i> Background
           </el-dropdown-item>
@@ -24,6 +27,7 @@
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
+      <BoardManager @changeBoard="changeBoard($event)" @newBoard="createBoard($event)" @close="boardManagerVisible = false" :visible="boardManagerVisible"></BoardManager>
       <LoadFile @updatedState="updateConnections" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
       <SquareSettings @close="squareSettingsVisible = false" @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
       <ConnectionSettings @connectionSettingsClose="showConnectionEditor = false; connectionSettingsVisible = false" :visible="connectionSettingsVisible" :connection="editConnection"></ConnectionSettings>
@@ -53,15 +57,15 @@
     <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
       <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX/zoom" :y2="dragY/zoom" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
-        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections" :key="c.idx" :stroke-dasharray="(c.dashed)?`${c.dashedA}, ${c.dashedB}`:'5,0'" :style="{'stroke': c.color, 'stroke-width': c.width}"/>
+        <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections(this.boardId)" :key="c.idx" :stroke-dasharray="(c.dashed)?`${c.dashedA}, ${c.dashedB}`:'5,0'" :style="{'stroke': c.color, 'stroke-width': c.width}"/>
       </svg>
       <div v-if="showConnectionEditor" class="connection-editor" :style="{left: conEditorLeft, top: conEditorTop}">
         <el-button class="action" @click="onEditConnection" type="success" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square @dblClickSquare="openEditor(s, $event)" @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" :itype="s.type" :isquare="s" v-for="(s, index) in allSquares" :key="s.idx"></Square>
+      <Square :boardId="boardId" @dblClickSquare="openEditor(s, $event)" @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" :itype="s.type" :isquare="s" v-for="(s, index) in allSquares(this.boardId)" :key="s.idx"></Square>
     </div>
-    <div class="square-border" v-for="(s, index) in allSquares" :key="s.idx"
+    <div class="square-border" v-for="(s, index) in allSquares(this.boardId)" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 60)*zoom}px`, 'height': '40px'}">
       <el-row class="actions" v-if="s.showActions">
         <!-- <el-button class="action" @click.stop.prevent="openEditor(s, $event)" type="primary" icon="el-icon-edit" circle></el-button> -->
@@ -91,12 +95,13 @@ import MarkdownEditor from './MarkdownEditor'
 import DraggableResizable from './Draggable'
 import Square from './Square'
 import { mapGetters, mapMutations  } from 'vuex'
+import BoardManager from './BoardManager'
 import LoadFile from './LoadFiles'
 import SquareSettings from './SquareSettings'
 import ConnectionSettings from './ConnectionSettings'
-import stateTemplate from '../template'
 import { sideCoords } from '../utils/geom.js'
 import Automerge from 'automerge'
+import stateTemplate from '../template'
 
 const uiStates = { 'DEFAULT': 0,
                    'SELECTED_SQUARE': 1,
@@ -109,10 +114,18 @@ const uiStates = { 'DEFAULT': 0,
 
 export default {
   name: 'SquareBoard',
-  components: { Square, MarkdownEditor, LoadFile, SquareSettings, ConnectionSettings, DraggableResizable },
-  props: {
-    startPad: {}
-  },
+  components: {
+    Square,
+    MarkdownEditor,
+    LoadFile,
+    SquareSettings,
+    ConnectionSettings,
+    DraggableResizable,
+    BoardManager },
+  props: [
+    'startPad',
+    'iboardId'
+  ],
   //sockets: {
   // 'squares': function (data) {
       // // this.$store.replaceState(data)
@@ -171,6 +184,7 @@ export default {
   // },
   data: function () {
     return {
+      boardId: (this.iboardId)?this.iboardId:'defaultBoard',
       lastZ: 1,
       uiState: uiStates['DEFAULT'],
       squareOnZoom: {},
@@ -179,6 +193,7 @@ export default {
       conEditorTime: 0,
       showConnectionEditor: false,
       loadFileVisible: false,
+      boardManagerVisible: false,
       conEditorLeft: 0,
       conEditorTop: 0,
       origWidth: 0,
@@ -225,6 +240,10 @@ export default {
     }
   },
   created () {
+    if (this.startPad) {
+      this.setState({ boardId: this.boardId, newState: this.startPad })
+    }
+
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keypress', this.onKeyPress)
     window.addEventListener('scroll', this.onScroll)
@@ -234,7 +253,7 @@ export default {
 
     this.adjustInitialCanvasSize()
     // Get highest z index
-    for (var sq in this.allSquares) {
+    for (var sq in this.allSquares(this.boardId)) {
       if (sq.zIndex > this.lastZ) {
         this.lastZ = sq.zIndex
       }
@@ -242,14 +261,14 @@ export default {
 
     this.$nextTick(() => {
       this.updateConnections()
-      let vuex = JSON.parse(localStorage.getItem('vuex'))
-      let newAutomergeState = Automerge.change(this.history, doc => {
-        for (var k in vuex) {
-         doc[k] = vuex[k]
-        }
-      })
+      // let vuex = JSON.parse(localStorage.getItem('vuex'))
+      // let newAutomergeState = Automerge.change(this.history, doc => {
+      //   for (var k in vuex) {
+      //    doc[k] = vuex[k]
+      //   }
+      // })
 
-      let changes = Automerge.getChanges(this.history, newAutomergeState)
+      // let changes = Automerge.getChanges(this.history, newAutomergeState)
       // this.$socket.emit('update', JSON.stringify(changes))
     })
 
@@ -257,25 +276,25 @@ export default {
   computed: {
     bgurl: {
       get () {
-        return this.$store.state.bgurl
+        return this.$store.state[this.boardId].bgurl
       },
       set (bgurl) {
-        this.$store.commit('setBgurl', bgurl)
+        this.$store.commit('setBgurl', { boardId: this.boardId, bgurl: bgurl })
       }
     },
     bgcolor: {
       get () {
-        return this.$store.state.bgcolor
+        return this.$store.state[this.boardId].bgcolor
       },
       set (color) {
-        this.$store.commit('setBgcolor', color)
+        this.$store.commit('setBgcolor', { boardId: this.boardId, color: color })
       }
     },
     heightN: function () {
-      return this.height
+      return this.height(this.boardId)
     },
     widthN: function () {
-      return this.width
+      return this.width(this.boardId)
     },
     boardPosition: function () {
       switch (this.uiState) {
@@ -286,7 +305,7 @@ export default {
       }
     },
     ...mapGetters([
-      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state', 'history'
+      'allSquares', 'allConnections', 'height', 'width', 'board', 'boardString', 'state'
     ])
   },
   methods: {
@@ -313,16 +332,19 @@ export default {
       this.origWidth = window.innerWidth
       this.origHeight = window.innerHeight
 
-      if (this.width > this.origWidth) {
-        this.origWidth = this.width
+      console.log(this.width(this.boardId), this.boardId, this.origWidth)
+
+      if (this.width(this.boardId) > this.origWidth) {
+        this.origWidth = this.width(this.boardId)
       } else {
-        this.setWidth(this.origWidth)
+        console.log('SET WIDTH')
+        this.setWidth({ boardId: this.boardId, w: this.origWidth })
       }
 
-      if (this.height > this.origHeight) {
-        this.origHeight = this.height
+      if (this.height(this.boardId) > this.origHeight) {
+        this.origHeight = this.height(this.boardId)
       } else {
-        this.setHeight(this.origHeight)
+        this.setHeight({ boardId: this.boardId, h: this.origHeight })
       }
     },
     onMouseMove: function (event) {
@@ -410,12 +432,12 @@ export default {
       this.zoom = scale
     },
     updateConnections: function () {
-      let cs = this.allConnections
+      let cs = this.allConnections(this.boardId)
       if (cs) {
         let new_cs = []
         for (let i = 0; i < cs.length; ++i) {
-           let sq1 = this.allSquares.find(s => s.idx == cs[i].p1.idx)
-           let sq2 = this.allSquares.find(s => s.idx == cs[i].p2.idx)
+           let sq1 = this.allSquares(this.boardId).find(s => s.idx == cs[i].p1.idx)
+           let sq2 = this.allSquares(this.boardId).find(s => s.idx == cs[i].p2.idx)
 
            new_cs.push({p1: sq1,
                         p2: sq2,
@@ -426,9 +448,9 @@ export default {
                         dashedA: cs[i].dashedA,
                         dashedB: cs[i].dashedB})
         }
-        this.setConnections(new_cs)
+        this.setConnections({ boardId: this.boardId, connections: new_cs })
       } else {
-        this.setConnections([])
+        this.setConnections({ boardId: this.boardId, connections: [] })
       }
     },
     closeQuickEditor: function (event) {
@@ -448,11 +470,11 @@ export default {
                         zIndex: this.lastZ + 1
                       }
       this.lastZ = this.lastZ + 1
-      this.addSquare(newSquare)
+      this.addSquare({ boardId: this.boardId, square: newSquare })
       // this.$refs.quickEdit.value = ''
       this.newSquareText = ''
       this.uiState = uiStates['DEFAULT']
-      let vuex = localStorage.getItem('vuex')
+      // let vuex = localStorage.getItemd('vuex')
       // this.$socket.emit('update', JSON.stringify(vuex))
     },
     addSquareOnCursor: function (event) {
@@ -483,6 +505,10 @@ export default {
     },
     handleDropdownMenu: function (event) {
       switch (event) {
+        case 'boards':
+          this.boardManagerVisible = true
+          break
+
         case 'background':
           this.backgroundSettingsVisible = true
           break
@@ -496,7 +522,7 @@ export default {
           break
 
         case 'clear':
-          this.$store.replaceState(stateTemplate)
+          this.$store.replaceState({ boardId: this.boardOd, state: stateTemplate })
           this.adjustInitialCanvasSize()
           this.$nextTick(() => {
               this.updateConnections()
@@ -512,6 +538,30 @@ export default {
       this.connectionMode = true
       this.uiState = uiStates['CONNECTING']
       this.connectionTmp.push(square)
+    },
+    changeBoard: function (event) {
+      this.boardId = event
+      this.adjustInitialCanvasSize()
+      // Get highest z index
+      for (var sq in this.allSquares(this.boardId)) {
+        if (sq.zIndex > this.lastZ) {
+          this.lastZ = sq.zIndex
+        }
+      }
+      this.$nextTick(() => {
+        this.updateConnections()
+      })
+    },
+    createBoard: function (event) {
+      this.setState({ boardId: event, newState: stateTemplate['defaultBoard'] })
+      this.boardId = event
+      this.adjustInitialCanvasSize()
+      // Get highest z index
+      for (var sq in this.allSquares(this.boardId)) {
+        if (sq.zIndex > this.lastZ) {
+          this.lastZ = sq.zIndex
+        }
+      }
     },
     onMouseWheel: function (event) {
       if (this.uiState == uiStates['DEFAULT']) {
@@ -598,16 +648,16 @@ export default {
       }
     },
     onResize: function (event) {
-      if (this.height < window.innerHeight) {
-        this.setHeight(window.innerHeight)
+      if (this.height(this.boardId) < window.innerHeight) {
+        this.setHeight({ boardId: this.boardId, h: window.innerHeight })
       }
-      if (this.width < window.innerWidth) {
-        this.setWidth(window.innerWidth)
+      if (this.width(this.boardId) < window.innerWidth) {
+        this.setWidth({ boardId: this.boardId, w: window.innerWidth })
       }
     },
     adjustCanvasSize: function () {
       var maxHeight = 0, maxWidth = 0
-      for (var sq of this.allSquares) {
+      for (var sq of this.allSquares(this.boardId)) {
         if (sq.x + sq.width > maxWidth) {
            maxWidth = sq.x + sq.width
         }
@@ -641,17 +691,17 @@ export default {
         let newZoom = 1  - this.zoomLevel * 0.2
         this.adjustCanvasSize()
         this.zoom = (newZoom >= 0.2) ? newZoom: 0.2
-        this.setWidth(this.origWidth / this.zoom)
-        this.setHeight(this.origHeight / this.zoom)
+        this.setWidth({ boardId: this.boardId, w: this.origWidth / this.zoom })
+        this.setHeight({ boardId: this.boardId, h: this.origHeight / this.zoom })
       } else {
         this.zoomLevel -= 1
         this.adjustCanvasSize()
         if (this.zoomLevel >= 0) {
-          this.setWidth(this.origWidth / (1 - this.zoomLevel*0.2))
-          this.setHeight(this.origHeight / (1 - this.zoomLevel*0.2))
+          this.setWidth({ boardId: this.boardId, w: this.origWidth / (1 - this.zoomLevel*0.2) })
+          this.setHeight({ boardId: this.boardId, h: this.origHeight / (1 - this.zoomLevel*0.2) })
         } else {
-          this.setWidth(this.origWidth * (1 - this.zoomLevel*0.2))
-          this.setHeight(this.origHeight * (1 - this.zoomLevel*0.2))
+          this.setWidth({ boardId: this.boardId, w: this.origWidth * (1 - this.zoomLevel*0.2) })
+          this.setHeight({ boardId: this.boardId, h: this.origHeight * (1 - this.zoomLevel*0.2) })
         }
         this.zoom = 1 - this.zoomLevel * 0.2
       }
@@ -659,27 +709,27 @@ export default {
     onActivated: function (event) {
       event.zIndex = this.lastZ
       if (this.connectionMode) {
-        let sq1 = this.allSquares.find(s => s.idx == this.connectionTmp[0].idx)
-        let sq2 = this.allSquares.find(s => s.idx == event.idx)
+        let sq1 = this.allSquares(this.boardId).find(s => s.idx == this.connectionTmp[0].idx)
+        let sq2 = this.allSquares(this.boardId).find(s => s.idx == event.idx)
 
-        this.addConnection({p1: sq1, p2: sq2})
+        this.addConnection({ boardId: this.boardId, connection: {p1: sq1, p2: sq2} })
         this.connectionMode = false
         this.connectionTmp = []
         this.uiState = uiStates['DEFAULT']
       }
     },
     createConnections: function (square) {
-      this.updateSquareConnections(square)
+      this.updateSquareConnections({ boardId: this.boardId, square: square} )
     },
     onClickLine: function (connection) {
     },
     onRemoveConnection: function () {
       this.showConnectionEditor = false
-      this.removeConnection(this.selectedConnection)
+      this.removeConnection({ boardId: this.boardId, connection: this.selectedConnection })
     },
     onRemoveSquare: function (square_id) {
       this.lastZ -= 1
-      this.removeSquare(square_id)
+      this.removeSquare({ boardId: this.boardId, idx: square_id })
     },
     onMouseoverConnection: function (event, connection) {
       this.conEditorTime = new Date().getMilliseconds()
@@ -725,7 +775,7 @@ export default {
     onDownloadPad: function () {
       let element = document.createElement('a')
       let padConfig = localStorage.getItem('vuex')
-      element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(padConfig))
+      element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(padConfig[this.boardId]))
       element.setAttribute('download', 'pad-config.json')
       element.style.display = 'none'
       document.body.appendChild(element)
@@ -733,7 +783,7 @@ export default {
       document.body.removeChild(element)
     },
     ...mapMutations([
-      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState', 'setBgcolor', 'updateHistory', 'updateSquareConnections'
+      'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState', 'setBgcolor', 'updateSquareConnections'
     ])
   },
   watch: {
@@ -747,6 +797,19 @@ export default {
               break
         }
       }
+    },
+    '$route': function (to, from) {
+      this.$nextTick(() => {
+        this.updateConnections()
+        // let vuex = JSON.parse(localStorage.getItem('vuex'))
+        // let newAutomergeState = Automerge.change(this.history, doc => {
+        //   for (var k in vuex) {
+        //    doc[k] = vuex[k]
+        //   }
+        // })
+        // let changes = Automerge.getChanges(this.history, newAutomergeState)
+        // this.$socket.emit('update', JSON.stringify(changes))
+      })
     }
   }
 }

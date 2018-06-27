@@ -1,6 +1,6 @@
 <template>
   <div class="home" :style="{'background-color': bgcolor}">
-    <SquareBoard :startPad="startPad"/>
+    <SquareBoard :boardId="boardId" :startPad="startPad"/>
   </div>
 </template>
 
@@ -13,7 +13,7 @@ import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
   name: 'Squares',
-  props: ['startPad'],
+  props: ['startPad', 'boardId'],
   components: {
     SquareBoard
   },
