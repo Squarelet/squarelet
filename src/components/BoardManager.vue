@@ -6,7 +6,7 @@
         width="30%">
         <p/>
         <ul>
-          <li v-for="boardId of boards" @click="$emit('changeBoard', boardId); $emit('close')">{{boardId}}</li>
+          <router-link tag="li" v-for="boardId of boards" :to="`/b/${boardId}`">{{boardId}}</router-link>
         </ul>
         <el-form>
           <el-form-item label="Board Name">

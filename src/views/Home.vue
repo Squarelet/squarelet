@@ -1,6 +1,6 @@
 <template>
   <div class="home" :style="{'background-color': bgcolor}">
-    <SquareBoard :iboardId="iboardId" :startPad="startPad"/>
+    <SquareBoard v-if="iboardId" :iboardId="iboardId" :startPad="startPad"/>
   </div>
 </template>
 
