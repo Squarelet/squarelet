@@ -524,7 +524,7 @@ export default {
           break
 
         case 'clear':
-          this.$store.replaceState({ boardId: this.boardOd, state: stateTemplate })
+          this.setState({ boardId: this.boardId, newState: Object.assign({}, stateTemplate['defaultBoard']) })
           this.adjustInitialCanvasSize()
           this.$nextTick(() => {
               this.updateConnections()
