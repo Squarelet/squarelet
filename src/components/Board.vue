@@ -28,7 +28,7 @@
         </el-dropdown-menu>
       </el-dropdown>
       <BoardManager @changeBoard="changeBoard($event)" @newBoard="createBoard($event)" @close="boardManagerVisible = false" :visible="boardManagerVisible"></BoardManager>
-      <LoadFile @updatedState="updateConnections" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
+      <LoadFile @updatedState="updateConnections" :boardId="boardId" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
       <SquareSettings @close="squareSettingsVisible = false" @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
       <ConnectionSettings @connectionSettingsClose="showConnectionEditor = false; connectionSettingsVisible = false" :visible="connectionSettingsVisible" :connection="editConnection"></ConnectionSettings>
       <el-dialog
@@ -778,9 +778,10 @@ export default {
       this.lastScroll = event.pageY
     },
     onDownloadPad: function () {
+      console.log('TESTE')
       let element = document.createElement('a')
-      let padConfig = localStorage.getItem('vuex')
-      element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(padConfig[this.boardId]))
+      let padConfig = JSON.parse(localStorage.getItem('vuex'))
+      element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(JSON.stringify(padConfig[this.boardId])))
       element.setAttribute('download', 'pad-config.json')
       element.style.display = 'none'
       document.body.appendChild(element)

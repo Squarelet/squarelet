@@ -21,10 +21,11 @@
 <script>
 
 import axios from 'axios'
+import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
   name: 'LoadFile',
-  props: ['visible'],
+  props: ['visible', 'boardId'],
   data () {
     return {
       url: '',
@@ -57,12 +58,15 @@ export default {
       }
     },
     updateState: function () {
-      this.$store.replaceState(this.loadedFile)
+      this.setState({ boardId: this.boardId, newState: this.loadedFile })
       this.$nextTick(() => {
         this.$emit('updatedState')
         this.$emit('close')
       })
-    }
+    },
+    ...mapMutations([
+      'setState'
+    ])
   }
 }
 
