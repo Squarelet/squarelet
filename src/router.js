@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
 import startPad from './pads/startPad'
+import store from './store'
 
 Vue.use(Router)
 

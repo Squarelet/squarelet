@@ -1,11 +1,30 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import createPersistedState from 'vuex-persistedstate'
+import localforage from 'localforage'
+import VuexPersistence from 'vuex-persist'
 import stateTemplate from './template'
 import Automerge from 'automerge'
 import { sideCoords } from './utils/geom.js'
 
 Vue.use(Vuex)
+
+const vuexPersistEmitter = () => {
+    return store => {
+      store._vm.$root.$data['vue-persist-patch-delay'] = true
+      store.subscribe(mutation => {
+          if (mutation.type === 'RESTORE_MUTATION') {
+            store._vm.$root.$data['vue-persist-patch-delay'] = false
+            store._vm.$root.$emit('storageReady');
+          }
+      })
+    }
+}
+
+const vuexLocal = new VuexPersistence({
+    strictMode: true,
+    asyncStorage: true,
+    storage: localforage
+})
 
 function closerSides(square1, square2) {
   let minDistance = 0
@@ -32,6 +51,7 @@ function closerSides(square1, square2) {
 export default new Vuex.Store({
   state: Object.assign({}, stateTemplate),
   mutations: {
+    RESTORE_MUTATION: vuexLocal.RESTORE_MUTATION,
     setState (state, { boardId, newState }) {
       // state = { ...state, [boardId]: newState }
       Vue.set(state, boardId, newState)
@@ -173,5 +193,5 @@ export default new Vuex.Store({
     lastZ: (state) => (boardId) => { return state[boardId].lastZ },
     boards: (state) => { return Object.keys(state).filter(i => i !== 'editorState') }
   },
-  plugins: [createPersistedState()]
+  plugins: [vuexLocal.plugin, vuexPersistEmitter()]
 })
