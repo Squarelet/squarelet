@@ -2,11 +2,12 @@
   <draggable-resizable :ref="`note-${idx}`" :iidx="idx" @dblClickSquare="$emit('dblClickSquare', $event)" @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
   <el-card v-if="type === 'markdown'" :class="{'isDark': isDark}" :style="{'border': border}" :body-style="{ height: (height < 0)?'auto':'100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
       <el-row>
-      <div ref="noteContent" v-html="html"></div>
+        <div ref="noteContent" v-html="html"></div>
       </el-row>
   </el-card>
   <el-card v-else-if="type === 'image'" :class="{'isDark': isDark}"  :style="{'border': border}" :body-style="{ height: '100%', 'background-color': 'rgba(0,0,0,0)', 'overflow-y': 'auto', 'padding': 0}" class="note image">
-    <img :src="imageURL">
+    <img v-if="imageUrl" :src="imageURL">
+    <img v-if="dataUri" :src="dataUri">
   </el-card>
   <el-card v-else-if="type === 'website'" :class="{'isDark': isDark}"  :style="{'border': border}" :body-style="{ height: '100%', 'background-color': 'rgba(0,0,0,0)', 'overflow-y': 'auto', 'padding': 0}" class="note website">
     <iframe scroll="true" :width="width" :height="height" :src="websiteURL"></iframe>
@@ -24,22 +25,22 @@ import 'element-ui/lib/theme-chalk/index.css';
 import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
-  props: { boardId: String, zoom: Number, itype: String, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object },
+  props: { boardId: String, zoom: Number, itype: String, itext: String, iwidth: Number, iheight: Number, ix: Number, iy: Number, iidx: String, icolor: String, itextcolor: String, itextsize:Number, izIndex: Number, isDark: Boolean, isquare: Object, idataUri: String },
   components: { DraggableResizable, MarkdownEditor, sketch},
   data: function () {
     return {
-      square: this.isquare,
       width: this.iwidth,
       height: this.iheight,
       x: this.ix,
       y: this.iy,
       zIndex: this.izIndex,
       text: this.itext,
-      imageURL: (this.isquare.imageURL)?this.isquare.imageURL:'',
-      websiteURL: (this.isquare.websiteURL)?this.isquare.websiteURL:'',
+      dataUri: (this.idataUri)?this.idataUri:'',
+      imageURL: (this.iimageURL)?this.iimageURL:'',
+      websiteURL: (this.iwebsiteURL)?this.iwebsiteURL:'',
       color: (this.icolor)?this.icolor:'#fff',
-      borderSize: (this.isquare.borderSize)?this.isquare.borderSize:1,
-      borderColor: (this.isquare.borderColor)?this.isquare.borderColor:'#fff',
+      borderSize: (this.iborderSize)?this.iborderSize:1,
+      borderColor: (this.iborderColor)?this.iborderColor:'#fff',
       textColor: (this.itextcolor)?this.itextcolor:'#000',
       textSize: (this.itextsize)?this.itextsize:16,
       idx: this.iidx,

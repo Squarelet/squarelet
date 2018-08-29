@@ -63,7 +63,33 @@
         <el-button class="action" @click="onEditConnection" type="success" icon="el-icon-edit" circle></el-button>
         <el-button class="action" @click="onRemoveConnection" type="danger" icon="el-icon-delete" circle></el-button>
       </div>
-      <Square :boardId="boardId" @dblClickSquare="openEditor(s, $event)" @touchright="onTouchRight()" @activated="onActivated" @squaresMoved="createConnections(s)" :style="{'z-index': s.zIndex}" :isDark="squareIsDark()" :zoom="zoom" :itext="s.text" :icolor="s.color" :iidx="s.idx" :ix="s.x" :iy="s.y" :iwidth="s.width" :iheight="s.height" :izIndex="s.zIndex" :itextcolor="s.textColor" :itextsize="s.textSize" :itype="s.type" :isquare="s" v-for="(s, index) in allSquares(this.boardId)" :key="s.idx"></Square>
+      <Square v-for="(s, index) in allSquares(this.boardId)"
+              :boardId="boardId"
+              @dblClickSquare="openEditor(s, $event)"
+              @touchright="onTouchRight()"
+              @activated="onActivated"
+              @squaresMoved="createConnections(s)"
+              :style="{'z-index': s.zIndex}"
+              :isDark="squareIsDark()"
+              :zoom="zoom"
+              :itext="s.text"
+              :icolor="s.color"
+              :iidx="s.idx"
+              :ix="s.x"
+              :iy="s.y"
+              :iwidth="s.width"
+              :iheight="s.height"
+              :izIndex="s.zIndex"
+              :itextcolor="s.textColor"
+              :itextsize="s.textSize"
+              :idataUri="s.dataUri"
+              :itype="s.type"
+              :iborderSize="s.borderSize"
+              :iborderColor="s.borderColor"
+              :iimageURL="s.imageURL"
+              :iwebsiteURL="s.websiteURL"
+              :key="s.idx">
+      </Square>
     </div>
     <div class="square-border" v-for="(s, index) in allSquares(this.boardId)" :key="s.idx"
         :style="{'top': `${s.y*zoom - 50}px`, 'left': `${(s.x - 10)*zoom}px`, 'width': `${(s.width + 60)*zoom}px`, 'height': '40px'}">
@@ -102,6 +128,7 @@ import ConnectionSettings from './ConnectionSettings'
 import { sideCoords } from '../utils/geom.js'
 import Automerge from 'automerge'
 import stateTemplate from '../template'
+import localforage from 'localforage'
 
 const uiStates = { 'DEFAULT': 0,
                    'SELECTED_SQUARE': 1,
@@ -780,13 +807,17 @@ export default {
     onDownloadPad: function () {
       console.log('TESTE')
       let element = document.createElement('a')
-      let padConfig = JSON.parse(localStorage.getItem('vuex'))
-      element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(JSON.stringify(padConfig[this.boardId])))
-      element.setAttribute('download', 'pad-config.json')
-      element.style.display = 'none'
-      document.body.appendChild(element)
-      element.click()
-      document.body.removeChild(element)
+      localforage.getItem('vuex').then(s => {
+        console.log(s)
+        let padConfig = s
+        element.setAttribute('href', 'data:text/plaincharset=utf-8,' + encodeURIComponent(JSON.stringify(padConfig[this.boardId])))
+        element.setAttribute('download', 'pad-config.json')
+        element.style.display = 'none'
+        document.body.appendChild(element)
+        element.click()
+        document.body.removeChild(element)
+
+      })
     },
     ...mapMutations([
       'setBoard', 'addSquare', 'setSquares', 'removeSquare', 'saveSquares', 'addConnection', 'setConnections', 'setHeight', 'changeHeight', 'setWidth', 'removeConnection', 'setState', 'setBgcolor', 'updateSquareConnections'

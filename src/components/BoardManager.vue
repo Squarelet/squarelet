@@ -6,7 +6,7 @@
         width="30%">
         <p/>
         <ul>
-          <router-link tag="li" v-for="boardId of boards" :to="`/b/${boardId}`">{{boardId}}</router-link>
+          <router-link tag="li" v-for="boardId of boards" :key="boardId" :to="`/b/${boardId}`">{{boardId}}</router-link>
         </ul>
         <el-form>
           <el-form-item label="Board Name">

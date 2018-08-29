@@ -16,6 +16,13 @@
           <el-form-item v-if="square.type === 'image'" label="Image URL">
             <el-input v-model="square.imageURL" @change="onChangeImageURL"></el-input>
           </el-form-item>
+          <vue-base64-file-upload
+            v-if="square.type === 'image'" 
+            accept="image/png,image/jpeg"
+            image-class="image-preview"
+            input-class="image-input"
+            @file="onFile"
+            @load="onLoad" />
           <el-form-item v-if="square.type === 'website'" label="URL">
             <el-input v-model="square.websiteURL" @change="onChangeWebsiteURL"></el-input>
           </el-form-item>
@@ -58,15 +65,27 @@
 
 <script>
 
+import VueBase64FileUpload from './ImageUpload'
+
 export default {
   name: 'SquareSettings',
   props: ['visible', 'square'],
+  components: { VueBase64FileUpload },
   data () {
     return {
       isopen: this.visible,
+      imageFile: ''
     }
   },
   methods: {
+    onFile: function (file) {
+      console.log(file)
+      this.square.imageFile = file
+    },
+    onLoad: function (dataUri) {
+      console.log(dataUri)
+      this.square.dataUri = dataUri
+    },
     onChangeType: function (type) {
       this.square.type = type
     },
