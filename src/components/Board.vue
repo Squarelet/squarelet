@@ -596,7 +596,7 @@ export default {
       this.$router.push({path: `/b/${this.boardId}`})
     },
     onMouseWheel: function (event) {
-      if (this.uiState == uiStates['DEFAULT']) {
+      if (this.uiState == uiStates['DEFAULT'] && event.ctrlKey) {
         event.preventDefault()
         if (event.deltaY < 0) {
           // window.scrollBy(event.clientX/this.zoom, 0)
