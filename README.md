@@ -2,7 +2,7 @@
 
 https://squarelet.org
 
-# Current Features
+## Current Features
  * Offline first
     * All data is saved locally in IndexedDB using [localForage](https://localforage.github.io/localForage/).
     * Uses [SW Precache Webpack Plugin](https://github.com/goldhand/sw-precache-webpack-plugin) to make it possible to use Squarelet even without internet connection.
@@ -24,7 +24,7 @@ https://squarelet.org
     * Export a board to a file
     * Import a board from a file
  
- # Development
+ ## Development
  
  ```
  $ git clone https://github.com/okfde/squarelet
