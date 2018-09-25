@@ -1,4 +1,4 @@
-# Squarelet: An Collaborative Online Pinboard
+# Squarelet: A collaborative online pinboard
 
 Squarelet is an online pinboard that enables **pupils** (from age 10), **students** and **knowledge workers** to develop, display and share ideas together without barriers, by creating and connecting squares of different types such as text, links, images and embedded open content.
 
