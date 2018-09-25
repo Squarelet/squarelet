@@ -2,9 +2,11 @@
 
 Squarelet is an online pinboard that enables **pupils** (from age 10), **students** and **knowledge workers** to develop, display and share ideas together without barriers, by creating and connecting squares of different types such as text, links, images and embedded open content.
 
+maintained by: [Open Knowledge Foundation Deutschland e.V.](https://www.okfn.de) / [edulabs-Team](https://edulabs.de/)
+
 Prototype: [squarelet.org](https://squarelet.org) (works best on Firefox desktop currently)
 
-Want to jump in? 
+*Want to jump in?*
 * [Bug hunt](https://github.com/okfde/squarelet/issues/): Did you find a bug in the [prototype](https://squarelet.org)? Please check existing [github issues](https://github.com/okfde/squarelet/issues/) and create a new one if it is not listed yet.
 * [Use Cases](): How would you like to use squarelet, in class or in your work? Please describe your idea as a comment to this issue
 * [Writing code](https://github.com/okfde/squarelet/labels/development): Ready to write some javascript with us? These issues are waiting..
