@@ -8,7 +8,7 @@ maintained by: [Open Knowledge Foundation Deutschland e.V.](https://www.okfn.de)
 
 Prototype: [squarelet.org](https://squarelet.org) (works best on Firefox desktop currently)
 
-*Want to jump in?*
+### Want to jump in?
 * [Bug hunt](https://github.com/okfde/squarelet/issues/): Did you find a bug in the [prototype](https://squarelet.org)? Please check existing [github issues](https://github.com/okfde/squarelet/issues/) and create a new one if it is not listed yet.
 * [Use Cases](): How would you like to use squarelet, in class or in your work? Please describe your idea as a comment to this issue
 * [Writing code](https://github.com/okfde/squarelet/labels/development): Ready to write some javascript with us? These issues are waiting..
