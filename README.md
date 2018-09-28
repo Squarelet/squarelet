@@ -1,10 +1,12 @@
-# Squarelet: A collaborative online pinboard
+#  Squarelet: A collaborative online pinboard
 
 Squarelet is an online pinboard that enables **pupils** (from age 10), **students** and **knowledge workers** to develop, display and share ideas together without barriers, by creating and connecting squares of different types such as text, links, images and embedded open content.
 
 !["Squarelet Board"](https://edulabs.de/assets/img/static/squarelet.png)
 
-maintained by: [Open Knowledge Foundation Deutschland e.V.](https://www.okfn.de) / [edulabs-Team](https://edulabs.de/)
+maintained by: 
+
+[<img src="https://okfn.de/static/images/logo_black.svg" width=300>](https://www.okfn.de)  [<img src="https://edulabs.de/assets/img/static/edulabs-logo.svg" width=300>](https://edulabs.de/)
 
 Prototype: [squarelet.org](https://squarelet.org) (works best on Firefox desktop currently)
 
