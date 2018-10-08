@@ -22,9 +22,14 @@ export default new Router({
       props: { iboardId: 'about', startPad: startPad }
     },
     {
-      path: '/b/:iboardId',
+      path: '/local/:iboardId',
       component: Home,
       props: true
+    },
+    {
+      path: '/shared/:iboardId',
+      component: Home,
+      props: function (route) { return { iboardId: route.params['iboardId'], sharedPad: true} }
     }
   ]
 })
