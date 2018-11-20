@@ -10,7 +10,10 @@ maintained by:
 
 Prototype: [squarelet.org](https://squarelet.org) (works best on Firefox desktop currently)
 
+Wireframes: [Google Slides (public comments)](https://docs.google.com/presentation/d/1NvHgqwmQuJguAoU0G2bbBaeWv8Zr5yRbvQd_LWUeYW4)
+
 ### Want to jump in?
+* [Improve the Design](https://docs.google.com/presentation/d/1NvHgqwmQuJguAoU0G2bbBaeWv8Zr5yRbvQd_LWUeYW4): Comment the Wireframes in our google slides presentation
 * [Bug hunt](https://github.com/okfde/squarelet/issues/): Did you find a bug in the [prototype](https://squarelet.org)? Please check existing [github issues](https://github.com/okfde/squarelet/issues/) and create a new one if it is not listed yet.
 * [Use Cases](): How would you like to use squarelet, in class or in your work? Please describe your idea as a comment to this issue
 * [Writing code](https://github.com/okfde/squarelet/labels/development): Ready to write some javascript with us? These issues are waiting..
@@ -41,14 +44,15 @@ Prototype: [squarelet.org](https://squarelet.org) (works best on Firefox desktop
 ## Roadmap
 ### Short term - What we are working on now :tada:
 * Explain project and open it to the community 
-	* collect use cases
-	* create gifs of use cases
-	* create landing page
+	* :white_check_mark: create [wireframes](https://docs.google.com/presentation/d/1NvHgqwmQuJguAoU0G2bbBaeWv8Zr5yRbvQd_LWUeYW4)
+	* :white_check_mark: collect use cases
+	* :pencil2: create gifs of use cases
+	* :pencil2: create landing page
 * create an MVP
-	* squarelets can be saved online 
-	    * simple backend options
+	* :white_check_mark: squarelets can be saved online 
+	    * :pencil2: simple backend options
 		* (more detailed description follows)
-	* squarelets can be shared with others
+	* :white_check_mark: squarelets can be shared with others
 		* (more detailed description follows)
 	* architecture is prepared for future extensions
 		* change UI library to prepare for easier mobile interface
