@@ -70,6 +70,12 @@ export default new Vuex.Store({
     setEditorState (state, editorState) {
       Vue.set(state, 'editorState', editorState)
     },
+    setSharedPad (state, sharedState) {
+      Vue.set(state, 'sharedPad', sharedState)
+    },
+    setSharedPadId (state, sharedPadId) {
+      Vue.set(state, 'sharedPadId', sharedPadId)
+    },
     setWidth (state, { boardId, w }) {
       // Vue.set(state, 'width', w)
       // state = { ...state, [boardId]: { ...state[boardId], width: w } }
@@ -191,7 +197,14 @@ export default new Vuex.Store({
     minWidth: (state) => (boardId) => { return state[boardId].minWidth },
     minHeight: (state) => (boardId) => { return state[boardId].minHeight },
     lastZ: (state) => (boardId) => { return state[boardId].lastZ },
-    boards: (state) => { return Object.keys(state).filter(i => i !== 'editorState') }
+    boards: (state) => {
+      var boardIds =  Object.keys(state).filter(i => i !== 'editorState')
+      var boardInfo = []
+      for (var b of boardIds) {
+        boardInfo.push({boardId: b, shared: state[b].shared?true:false})
+      }
+      return boardInfo
+    }
   },
   plugins: [vuexLocal.plugin, vuexPersistEmitter()]
 })

@@ -12,6 +12,8 @@ export default {
     minHeight: 0,
     minWidth: 0,
     lastZ: 1,
-    history: Automerge.init()
+    history: Automerge.init(),
+    sharedPad: false,
+    sharedPadId: ''
   }
 }

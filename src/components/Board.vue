@@ -1,6 +1,9 @@
 <template>
   <div class="squares" :style="{'max-height': heightN + 'px', 'background-color': bgcolor}">
     <div class="toolbar">
+      <el-button class="action" @click.stop.prevent="saveRemote()" type="secondary" v-if="sharedPad">
+          Save
+      </el-button>
       <el-button class="action" @click.stop.prevent="zoomOutSquare()" type="primary" v-if="uiState === 2">
           Back <i class="el-icon-zoom-out"></i>
       </el-button>
@@ -27,9 +30,15 @@
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
-      <BoardManager @changeBoard="changeBoard($event)" @newBoard="createBoard($event)" @close="boardManagerVisible = false" :visible="boardManagerVisible"></BoardManager>
+      <BoardManager @publishBoard="publishRemote" @changeBoard="changeBoard($event)" @newBoard="createBoard($event)" @close="boardManagerVisible = false" :visible="boardManagerVisible"></BoardManager>
       <LoadFile @updatedState="updateConnections" :boardId="boardId" @close="loadFileVisible = false" :visible="loadFileVisible"></LoadFile>
-      <SquareSettings @close="squareSettingsVisible = false" @squareSettingsClose="squareSettingsVisible = false" :visible="squareSettingsVisible" :square="editSquare"></SquareSettings>
+      <SquareSettings
+          :visible="squareSettingsVisible"
+          :square="editSquare"
+
+          @close="squareSettingsVisible = false"
+          @squareSettingsClose="squareSettingsVisible = false"
+          ></SquareSettings
       <ConnectionSettings @connectionSettingsClose="showConnectionEditor = false; connectionSettingsVisible = false" :visible="connectionSettingsVisible" :connection="editConnection"></ConnectionSettings>
       <el-dialog
         title="Background settings"
@@ -54,7 +63,18 @@
         </span>
       </el-dialog>
     </div>
-    <div @mouseup="onStopDrag($event)" @mousemove="onDrag($event)" @mousedown="onStartDrag($event)" class="board" :style="{'position': boardPosition, 'height': heightN + 'px', 'width': widthN + 'px', 'transform-origin': `${zoomX}px ${zoomY}px`, 'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`, 'background-color': bgcolor}">
+    <div
+      class="board"
+      :style="{'position': boardPosition,
+               'height': heightN + 'px',
+               'width': widthN + 'px',
+               'transform-origin': `${zoomX}px ${zoomY}px`,
+               'transform': `scale(${zoom}) translateX(${translateX}) translateY(${translateY})`, 'background-image': `url(${bgurl})`,
+               'background-color': bgcolor}"
+      @mouseup="onStopDrag($event)"
+      @mousemove="onDrag($event)"
+      @mousedown="onStartDrag($event)"
+      >
       <svg @dblclick.prevent.stop="addSquareOnCursor($event)" preserveAspectRatio="xMidYMid meet" :viewBox="`0 0 ${widthN} ${heightN}`" class="backgroundScreen">
         <line v-if="uiState == 5" :x1="connectionTmp[0].x + connectionTmp[0].width/2" :y1="connectionTmp[0].y + connectionTmp[0].height/2" :x2="dragX/zoom" :y2="dragY/zoom" style="stroke:rgb(140, 182, 164);stroke-width:5"/>
         <line @click="onClickConnection($event, c)" :x1="connectionCoords(c)[0][0]" :y1="connectionCoords(c)[0][1]" :x2="connectionCoords(c)[1][0]" :y2="connectionCoords(c)[1][1]" v-for="(c,index) in allConnections(this.boardId)" :key="c.idx" :stroke-dasharray="(c.dashed)?`${c.dashedA}, ${c.dashedB}`:'5,0'" :style="{'stroke': c.color, 'stroke-width': c.width}"/>
@@ -129,6 +149,7 @@ import { sideCoords } from '../utils/geom.js'
 import Automerge from 'automerge'
 import stateTemplate from '../template'
 import localforage from 'localforage'
+import axios from 'axios'
 
 const uiStates = { 'DEFAULT': 0,
                    'SELECTED_SQUARE': 1,
@@ -151,64 +172,9 @@ export default {
     BoardManager },
   props: [
     'startPad',
-    'iboardId'
+    'iboardId',
+    'sharedPad'
   ],
-  //sockets: {
-  // 'squares': function (data) {
-      // // this.$store.replaceState(data)
-      // let changes = JSON.parse(data)
-      // this.updateHistory(changes)
-      // // let newAutomergeState = Automerge.applyChanges(this.automergeState, changes)
-      // //console.log(this.automergeState)
-      // var newState = {}
-      // for (var k in this.history) {
-      //   switch (k) {
-      //     case 'squares':
-      //       newState['squares'] = []
-      //       for (var s of this.history[k]) {
-      //         var nsq = {}
-      //         for (var si in s) {
-      //           nsq[si] = s[si]
-      //         }
-      //         newState['squares'].push(nsq)
-      //       }
-      //       break
-      //     case 'connections':
-      //       newState['connections'] = []
-      //       for (var c of this.history[k]) {
-      //         var nc = {}
-      //         for (var i in c) {
-      //           nc[i] = c[i]
-      //         }
-      //         newState['connections'].push(nc)
-      //       }
-      //     default:
-      //       newState[k] = this.history[k]
-      //       break
-      //   }
-      // }
-
-      // // localStorage.clear()
-      // // this.$store.replaceState(newState)
-      // // localStorage.setItem('vuex', JSON.stringify(newState))
-      // // this.setState(newState)
-      // this.adjustInitialCanvasSize()
-      // this.$nextTick(() => {
-      //     // this.$store.replaceState(newState)
-      //     this.updateConnections()
-      // })
-   // },
-   // 'updateBgcolor': function (data) {
-   //    this.setBgcolor(data)
-   // },
-   // 'updateState': function (data) {
-   //    // this.$store.replaceState(JSON.parse(data))
-   //    // this.adjustInitialCanvasSize()
-   //    // this.$nextTick(() => {
-   //    //     this.updateConnections()
-   //    // })
-   // }
-  // },
   data: function () {
     return {
       boardId: (this.iboardId)?this.iboardId:'defaultBoard',
@@ -266,10 +232,16 @@ export default {
       connectionSettingsVisible: false
     }
   },
+  beforeCreate () {
+  },
   created () {
-    console.log('UNDEFINED', this.iboardId)
     if (this.startPad) {
       this.setState({ boardId: this.boardId, newState: this.startPad })
+    }
+
+    if (this.sharedPad) {
+      this.setState({ boardId: this.boardId, newState: Object.assign({}, stateTemplate['defaultBoard']) })
+      axios.get(`https://api.myjson.com/bins/${this.iboardId}`).then(this.updateStateFromRemote)
     }
 
     window.addEventListener('keydown', this.onKeyDown)
@@ -289,15 +261,6 @@ export default {
 
     this.$nextTick(() => {
       this.updateConnections()
-      // let vuex = JSON.parse(localStorage.getItem('vuex'))
-      // let newAutomergeState = Automerge.change(this.history, doc => {
-      //   for (var k in vuex) {
-      //    doc[k] = vuex[k]
-      //   }
-      // })
-
-      // let changes = Automerge.getChanges(this.history, newAutomergeState)
-      // this.$socket.emit('update', JSON.stringify(changes))
     })
 
   },
@@ -381,6 +344,10 @@ export default {
     },
     onStartDrag: function (event) {
       if (event.target.classList[0] === 'backgroundScreen') {
+        for (let sq of this.allSquares(this.boardId)) {
+          sq.showActions = false
+          this.uiState = uiStates['DRAG']
+        }
         switch (this.uiState) {
           case 6:
             this.addSquareQuickEditor()
@@ -558,6 +525,29 @@ export default {
           })
           break
       }
+    },
+    saveRemote: function () {
+      if (this.sharedPad) {
+        localforage.getItem('vuex').then(s => {
+           let padConfig = s
+           let boardConfig = s[this.boardId]
+           axios.put(`https://api.myjson.com/bins/${this.iboardId}`, boardConfig)
+        })
+      }
+    },
+    publishRemote: function (boardId) {
+      localforage.getItem('vuex').then(s => {
+         let padConfig = s
+         let boardConfig = s[boardId]
+         boardConfig.shared = true
+         var that = this
+         axios.post(`https://api.myjson.com/bins`, boardConfig).then((r) => {
+          console.log(r.data)
+          var remoteId = r.data.uri.split('/').slice(-1)[0]
+          boardConfig.shared = true
+          this.setState({ boardId: remoteId, newState: Object.assign({}, boardConfig) })
+         })
+      })
     },
     onChangeBgcolor: function (color) {
       this.bgcolor = color
@@ -750,6 +740,12 @@ export default {
         this.uiState = uiStates['DEFAULT']
       }
     },
+    updateStateFromRemote: function (response) {
+      this.setState({ boardId: this.boardId, newState: response.data })
+      this.$nextTick(() => {
+        this.updateConnections()
+      })
+    },
     createConnections: function (square) {
       this.updateSquareConnections({ boardId: this.boardId, square: square} )
     },
@@ -805,7 +801,6 @@ export default {
       this.lastScroll = event.pageY
     },
     onDownloadPad: function () {
-      console.log('TESTE')
       let element = document.createElement('a')
       localforage.getItem('vuex').then(s => {
         console.log(s)

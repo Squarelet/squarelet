@@ -1,7 +1,7 @@
 <template>
   <div class="home" :style="{'background-color': bgcolor}">
-    <SquareBoard v-if="show && iboardId" :iboardId="iboardId" :startPad="startPad"/>
-  </div>
+    <SquareBoard v-if="show && iboardId" :sharedPad="sharedPad" :iboardId="iboardId" :startPad="startPad"/>
+  </div> 
 </template>
 
 <script>
@@ -13,7 +13,7 @@ import { mapGetters, mapMutations  } from 'vuex'
 
 export default {
   name: 'Squares',
-  props: ['startPad', 'iboardId'],
+  props: ['startPad', 'iboardId', 'sharedPad'],
   data: function () {
     return {
       show: false
