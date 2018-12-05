@@ -1,5 +1,24 @@
 <template>
-  <draggable-resizable :ref="`note-${idx}`" :iidx="idx" @dblClickSquare="$emit('dblClickSquare', $event)" @touchright="$emit('touchright')" @activated="onActivated" @deactivated="showActions = false" class="note" :zoom="zoom" :x="x" :y="y" :w="width" :h="height" v-on:dragging="onDrag" v-on:resizing="onResize" :parent="true">
+  <draggable-resizable
+    class="note"
+
+    @dblClickSquare="$emit('dblClickSquare', $event)"
+    @touchright="$emit('touchright')"
+    @activated="onActivated"
+    @deactivated="showActions = false"
+    @dragging="onDrag"
+    @resizing="onResize"
+
+    :active="showActions"
+    :ref="`note-${idx}`"
+    :iidx="idx"
+    :zoom="zoom"
+    :x="x"
+    :y="y"
+    :w="width"
+    :h="height"
+    :parent="true"
+    >
   <el-card v-if="type === 'markdown'" :class="{'isDark': isDark}" :style="{'border': border}" :body-style="{ height: (height < 0)?'auto':'100%', color: textColor, 'background-color': color, 'font-size': textSizePx, 'overflow-y': 'auto'}" class="note">
       <el-row>
         <div ref="noteContent" v-html="html"></div>
