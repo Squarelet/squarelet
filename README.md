@@ -6,7 +6,7 @@ Squarelet is an online pinboard that enables **pupils** (from age 10), **student
 
 maintained by: 
 
-[<img src="https://okfn.de/static/okf/okf-logo-topbar.svg" width=300>](https://www.okfn.de)  [<img src="https://edulabs.de/assets/img/static/edulabs-logo.svg" width=300>](https://edulabs.de/)
+[<img src="https://okfn.de/files/blog/2021/03/Logo_okfde_black_centered.png" width=300>](https://www.okfn.de)  [<img src="https://edulabs.de/assets/img/static/edulabs-logo.svg" width=300>](https://edulabs.de/)
 
 Prototype: [squarelet.org](https://squarelet.org) (works best on Firefox desktop currently)
 
