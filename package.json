@@ -9,11 +9,12 @@
   },
   "dependencies": {
     "automerge": "^0.7.9",
-    "axios": "^0.18.0",
+    "axios": "^0.21.1",
+    "babel-loader": "^8.2.2",
     "element-ui": "^2.3.3",
     "font-awesome": "^4.7.0",
     "localforage": "^1.7.2",
-    "showdown": "^1.8.6",
+    "showdown": "^1.9.1",
     "simplemde": "^1.11.2",
     "socketio": "^1.0.0",
     "vue": "^2.5.13",
@@ -29,8 +30,8 @@
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-beta.6",
     "@vue/cli-plugin-eslint": "^3.0.0-beta.6",
-    "@vue/cli-service": "^3.0.0-beta.6",
-    "node-sass": "^4.7.2",
+    "@vue/cli-service": "^4.5.13",
+    "node-sass": "^4.14.1",
     "sass-loader": "^6.0.6",
     "sw-precache-webpack-plugin": "^0.11.5",
     "vue-template-compiler": "^2.5.13"
